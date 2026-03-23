@@ -1,0 +1,5 @@
+# Ignore Python's compiled cache files
+__pycache__/
+
+# Ignore the local projects directory
+projects/
