@@ -1,6 +1,7 @@
 import subprocess
 import os
 import shutil
+import sys
 from PySide6.QtWidgets import (QPushButton, QLineEdit, QLabel, QWidget, 
                                QHBoxLayout, QMenu, QFileDialog, QInputDialog, QMessageBox)
 from PySide6.QtCore import Qt, QPoint
@@ -110,7 +111,7 @@ class ScriptButton(BaseComponent):
 
         try:
             # We run the script from our INTERNAL projects folder
-            res = subprocess.check_output(["python", self.script_path] + args, text=True, stderr=subprocess.STDOUT)
+            res = subprocess.check_output([sys.executable, self.script_path] + args, text=True, stderr=subprocess.STDOUT)
             outputs = [s for s in siblings if hasattr(s, 'mode') and s.mode == 'output']
             for o in outputs: o.set_value(res)
         except Exception as e:
