@@ -18,7 +18,7 @@ def save_window(win_id, canvas):
             item.update({"label": c.btn.text(), "script": c.script_path})
         elif c.comp_type == "label":
             item["text"] = c.lbl.text()
-        elif c.comp_type in ["text_field", "file_field"]:
+        elif c.comp_type in ["text_field", "file_field", "folder_field"]:
             item["mode"] = c.mode
         data.append(item)
     

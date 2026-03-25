@@ -34,3 +34,4 @@ class EditorCanvas(QFrame):
         elif tid == "label": DraggableLabel(self, pos)
         elif tid == "text":  CustomField(self, pos, "text_field")
         elif tid == "file":  CustomField(self, pos, "file_field")
+        elif tid == "folder": CustomField(self, pos, "folder_field")

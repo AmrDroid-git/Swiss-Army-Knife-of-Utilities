@@ -62,13 +62,78 @@ class ScriptButton(BaseComponent):
         if self.is_edit_mode or not self.script_path: return
         
         siblings = self.parent().findChildren(BaseComponent)
+        
+        # 1. Gather all inputs
         inputs = [s for s in siblings if hasattr(s, 'mode') and s.mode == 'input']
         inputs.sort(key=lambda x: x.arg_order)
         args = [i.get_value() for i in inputs]
 
+        # 2. Gather outputs
+        text_outputs = [s for s in siblings if hasattr(s, 'mode') and s.mode == 'output' and getattr(s, 'field_type', '') == 'text_field']
+        file_outputs = [s for s in siblings if hasattr(s, 'mode') and s.mode == 'output' and getattr(s, 'field_type', '') in ['file_field', 'folder_field']]
+
+        # 3. Setup paths
+        script_dir = os.path.dirname(self.script_path)
+        script_name = os.path.basename(self.script_path)
+        
+        files_outputs_dir = os.path.join(script_dir, "files_outputs")
+        os.makedirs(files_outputs_dir, exist_ok=True)
+
+        # 4. TAKE SNAPSHOT BEFORE RUNNING
+        before_files = set(os.listdir(script_dir))
+
         try:
-            res = subprocess.check_output([sys.executable, self.script_path] + args, text=True, stderr=subprocess.STDOUT)
-            outputs = [s for s in siblings if hasattr(s, 'mode') and s.mode == 'output']
-            for o in outputs: o.set_value(res)
+            # 5. Run the script with UTF-8 Environment
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "utf-8"
+
+            res = subprocess.check_output(
+                [sys.executable, script_name] + args, 
+                text=True,
+                encoding='utf-8', 
+                stderr=subprocess.STDOUT,
+                cwd=script_dir,
+                env=env
+            )
+            
+            # 6. Send string output to Text Fields
+            for o in text_outputs: 
+                o.set_value(res.strip())
+
+            # 7. TAKE SNAPSHOT AFTER RUNNING & FIND NEW FILES
+            after_files = set(os.listdir(script_dir))
+            new_items = after_files - before_files
+
+            # Figure out where these new files should go
+            final_dest = files_outputs_dir
+            if file_outputs and file_outputs[0].get_value():
+                user_chosen_dir = file_outputs[0].get_value()
+                if os.path.isdir(user_chosen_dir):
+                    final_dest = user_chosen_dir
+
+            # 8. MOVE THE NEW FILES
+            if new_items:
+                for item in new_items:
+                    # Don't accidentally move the files_outputs folder itself
+                    if item == "files_outputs": continue 
+                    
+                    src_path = os.path.join(script_dir, item)
+                    dst_path = os.path.join(final_dest, item)
+                    
+                    # shutil.move works for both files and whole directories
+                    shutil.move(src_path, dst_path)
+                    
+                # print(f"Moved {len(new_items)} new items to {final_dest}")
+            else:
+                print("No new files were generated.")
+                
+        except subprocess.CalledProcessError as e:
+            print(f"\n❌ Script Crashed (Exit Code {e.returncode})!")
+            print(f"--- SCRIPT ERROR LOG ---\n{e.output}\n------------------------\n")
+            
+            # This throws the exact error into your UI text box so you can read it!
+            for o in text_outputs: 
+                o.set_value(f"CRASH: {e.output.strip()}")
+                
         except Exception as e:
-            print(f"Execution Error: {e}")
+            print(f"System Error: {e}")

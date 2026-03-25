@@ -34,6 +34,7 @@ class CustomWindow(QWidget):
         s_lay.addWidget(ToolboxItem("Text Label", "label"))
         s_lay.addWidget(ToolboxItem("Text Input/Output", "text"))
         s_lay.addWidget(ToolboxItem("File Input/Output", "file"))
+        s_lay.addWidget(ToolboxItem("Folder Input/Output", "folder"))
         s_lay.addStretch()
         
         self.content.addWidget(self.canvas)

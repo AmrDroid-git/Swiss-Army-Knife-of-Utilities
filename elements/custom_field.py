@@ -4,13 +4,15 @@ from .base import BaseComponent
 class CustomField(BaseComponent):
     def __init__(self, parent, pos, field_type):
         super().__init__(parent, field_type, pos)
+        self.field_type = field_type  
         self.setFixedSize(220, 45)
         self.mode = "input"
         self.layout = QHBoxLayout(self)
         self.entry = QLineEdit()
         self.layout.addWidget(self.entry)
         
-        if field_type == "file_field":
+        # ADDED: Show the browse button for both files AND folders
+        if field_type in ["file_field", "folder_field"]:
             self.browse_btn = QPushButton("...")
             self.browse_btn.setFixedWidth(30)
             self.browse_btn.clicked.connect(self.browse)
@@ -35,7 +37,14 @@ class CustomField(BaseComponent):
 
     def browse(self):
         if self.is_edit_mode: return
-        path, _ = QFileDialog.getOpenFileName(self, "Select File")
+        
+        # UPDATED LOGIC: If it's an output OR a folder field, ask for a Directory!
+        if self.mode == "output" or self.field_type == "folder_field":
+            path = QFileDialog.getExistingDirectory(self, "Select Folder")
+        else:
+            # Otherwise, ask for a File
+            path, _ = QFileDialog.getOpenFileName(self, "Select File")
+            
         if path: self.entry.setText(path)
 
     def get_value(self): return self.entry.text()
