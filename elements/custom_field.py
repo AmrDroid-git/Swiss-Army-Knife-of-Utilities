@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QMenu, QFileDialog, QInputDialog
+from PySide6.QtCore import Qt
 from .base import BaseComponent
 
 class CustomField(BaseComponent):
@@ -21,12 +22,16 @@ class CustomField(BaseComponent):
     def contextMenuEvent(self, event):
         if not self.is_edit_mode: return
         menu = QMenu(self)
+        edit_act = menu.addAction("Edit Default Value")
         mode_act = menu.addAction(f"Switch to {'OUTPUT' if self.mode == 'input' else 'INPUT'}")
         order_act = menu.addAction(f"Set Arg Order ({self.arg_order})")
         res_act, del_act = self.add_base_actions(menu)
         
         action = menu.exec(event.globalPos())
-        if action == mode_act:
+        if action == edit_act:
+            t, ok = QInputDialog.getText(self, "Edit", "Default Value:", text=self.entry.text())
+            if ok: self.entry.setText(t)
+        elif action == mode_act:
             self.mode = "output" if self.mode == "input" else "input"
             self.entry.setReadOnly(self.mode == "output")
             self.entry.setPlaceholderText(f"MODE: {self.mode.upper()}")

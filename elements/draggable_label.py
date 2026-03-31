@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QLabel, QHBoxLayout, QMenu, QInputDialog
+from PySide6.QtCore import Qt
 from .base import BaseComponent
 
 class DraggableLabel(BaseComponent):

@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QInputDialog
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt, QPoint, QTimer
 
 class BaseComponent(QWidget):
     def __init__(self, parent, comp_type, pos=QPoint(0,0)):
@@ -13,6 +13,10 @@ class BaseComponent(QWidget):
 
     def set_edit_mode(self, enabled):
         self.is_edit_mode = enabled
+        for child in self.findChildren(QWidget):
+            if child is not self:
+                child.setAttribute(Qt.WA_TransparentForMouseEvents, enabled)
+                child.setFocusPolicy(Qt.NoFocus if enabled else Qt.StrongFocus)
 
     def mousePressEvent(self, event):
         if self.is_edit_mode and event.button() == Qt.LeftButton:

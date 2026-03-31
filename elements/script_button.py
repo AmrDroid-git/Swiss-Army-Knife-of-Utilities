@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 from PySide6.QtWidgets import QPushButton, QHBoxLayout, QMenu, QFileDialog, QInputDialog, QMessageBox
+from PySide6.QtCore import Qt
 from .base import BaseComponent
 
 class ScriptButton(BaseComponent):
