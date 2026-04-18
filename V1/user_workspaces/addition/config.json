@@ -1,0 +1,52 @@
+[
+    {
+        "comp_type": "widget_button",
+        "x": 327,
+        "y": 319,
+        "width": 130,
+        "height": 50,
+        "arg_order": 0,
+        "properties": {},
+        "label": "Run Script",
+        "script_path": "user_workspaces\\addition\\scripts\\Run_Script\\main.py"
+    },
+    {
+        "comp_type": "widget_label",
+        "x": 169,
+        "y": 154,
+        "width": 199,
+        "height": 50,
+        "arg_order": 0,
+        "properties": {},
+        "text": "hbibyyyyyy"
+    },
+    {
+        "comp_type": "widget_i_text",
+        "x": 172,
+        "y": 190,
+        "width": 220,
+        "height": 44,
+        "arg_order": 0,
+        "properties": {},
+        "value": ""
+    },
+    {
+        "comp_type": "widget_i_text",
+        "x": 477,
+        "y": 187,
+        "width": 220,
+        "height": 44,
+        "arg_order": 1,
+        "properties": {},
+        "value": ""
+    },
+    {
+        "comp_type": "widget_o_text",
+        "x": 285,
+        "y": 462,
+        "width": 220,
+        "height": 44,
+        "arg_order": 0,
+        "properties": {}
+    }
+]

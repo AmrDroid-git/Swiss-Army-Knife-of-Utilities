@@ -1,0 +1,41 @@
+[
+    {
+        "comp_type": "widget_button",
+        "x": 405,
+        "y": 78,
+        "width": 164,
+        "height": 188,
+        "arg_order": 0,
+        "properties": {},
+        "label": "Run Script",
+        "script_path": "user_workspaces\\split\\scripts\\Run_Script\\main.py"
+    },
+    {
+        "comp_type": "widget_i_file_link",
+        "x": 316,
+        "y": 29,
+        "width": 412,
+        "height": 94,
+        "arg_order": 0,
+        "properties": {},
+        "value": "C:/Users/amrdr/OneDrive/Bureau/test_photo.jpg"
+    },
+    {
+        "comp_type": "widget_o_folder_link",
+        "x": 353,
+        "y": 182,
+        "width": 329,
+        "height": 188,
+        "arg_order": 0,
+        "properties": {}
+    },
+    {
+        "comp_type": "widget_console",
+        "x": 181,
+        "y": 333,
+        "width": 659,
+        "height": 282,
+        "arg_order": 0,
+        "properties": {}
+    }
+]
