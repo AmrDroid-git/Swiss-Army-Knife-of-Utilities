@@ -1,0 +1,44 @@
+[
+    {
+        "comp_type": "widget_button",
+        "x": 252,
+        "y": 158,
+        "width": 158,
+        "height": 35,
+        "arg_order": 0,
+        "properties": {},
+        "label": "Run Script",
+        "script_path": "user_workspaces\\javaadd\\scripts\\Run_Script\\Main.java",
+        "script_type": "java",
+        "is_compiled": true
+    },
+    {
+        "comp_type": "widget_o_text",
+        "x": 208,
+        "y": 256,
+        "width": 177,
+        "height": 30,
+        "arg_order": 0,
+        "properties": {}
+    },
+    {
+        "comp_type": "widget_i_text",
+        "x": 99,
+        "y": 85,
+        "width": 176,
+        "height": 28,
+        "arg_order": 0,
+        "properties": {},
+        "value": "88"
+    },
+    {
+        "comp_type": "widget_i_text",
+        "x": 364,
+        "y": 84,
+        "width": 176,
+        "height": 28,
+        "arg_order": 0,
+        "properties": {},
+        "value": "6"
+    }
+]

@@ -1,0 +1,36 @@
+[
+    {
+        "comp_type": "widget_i_text",
+        "x": 218,
+        "y": 32,
+        "width": 298,
+        "height": 47,
+        "arg_order": 0,
+        "properties": {},
+        "value": "3"
+    },
+    {
+        "comp_type": "widget_button",
+        "x": 289,
+        "y": 115,
+        "width": 175,
+        "height": 50,
+        "arg_order": 0,
+        "properties": {},
+        "label": "Run Script",
+        "script_path": "user_workspaces\\javacounter\\scripts\\Run_Script\\Main.java",
+        "script_type": "java",
+        "is_compiled": true
+    },
+    {
+        "comp_type": "widget_console",
+        "x": 119,
+        "y": 212,
+        "width": 538,
+        "height": 200,
+        "arg_order": 0,
+        "properties": {
+            "custom_font": "Segoe UI,16,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+        }
+    }
+]

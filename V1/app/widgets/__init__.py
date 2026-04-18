@@ -6,6 +6,7 @@ from .base_widget import BaseComponent
 from .button import WidgetButton
 from .console_window import WidgetConsole, WidgetInteractiveConsole
 from .label import WidgetLabel
+from .requirements_link import WidgetRequirementsLink
 
 from .text_widgets import WidgetIText, WidgetOText
 from .file_link_widgets import WidgetIFileLink, WidgetOFileLink
@@ -17,6 +18,7 @@ __all__ = [
     "WidgetConsole",
     "WidgetInteractiveConsole",
     "WidgetLabel",
+    "WidgetRequirementsLink",
     "WidgetIText",
     "WidgetOText",
     "WidgetIFileLink",

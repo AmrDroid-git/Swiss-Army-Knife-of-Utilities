@@ -1,5 +1,6 @@
 import os
 import shutil
+import platform
 from PySide6.QtWidgets import QPushButton, QHBoxLayout, QMenu, QFileDialog, QInputDialog, QMessageBox
 from PySide6.QtCore import Qt, Signal
 from app.widgets.base_widget import BaseComponent
@@ -8,11 +9,13 @@ class WidgetButton(BaseComponent):
     """
     The main execution trigger for the canvas. 
     It finds inputs, sorts them by arg_order, and tells the script_engine to execute!
+    Supports Python, Java, C, and C++ scripts with compilation support.
     """
 
     # Emit signal to delegate execution to script_engine.py per architecture rules.
     # We DO NOT freeze the UI with subprocess here anymore.
     run_script_requested = Signal(str, list, list)
+    compile_script_requested = Signal(str)  # Signal to compile a script
 
     def __init__(self, parent, pos, label="Run Script"):
         super().__init__(parent, "widget_button", pos)
@@ -24,7 +27,9 @@ class WidgetButton(BaseComponent):
         self.btn = QPushButton(label)
         self.layout.addWidget(self.btn)
         
-        self.script_path = "" # Points to the python file imported for this specific button
+        self.script_path = ""  # Points to the script file (main.py, Main.java, Main.c, Main.cpp)
+        self.script_type = ""  # Stores: 'python', 'java', 'c', 'cpp'
+        self.is_compiled = False  # Tracks if compiled (only for C/C++/Java)
         self.btn.clicked.connect(self.execute)
 
     def contextMenuEvent(self, event):
@@ -34,6 +39,11 @@ class WidgetButton(BaseComponent):
         
         rename_act = menu.addAction("Rename Button")
         link_act = menu.addAction("Import & Link Script Folder")
+        
+        # Add Compile option if a script is linked
+        compile_act = None
+        if self.script_path and self.script_type in ["java", "c", "cpp"]:
+            compile_act = menu.addAction("🔨 Compile Script")
         
         # Append the standard parent actions (Resize, Delete)
         font_act, res_act, del_act = self.add_base_actions(menu)
@@ -45,22 +55,66 @@ class WidgetButton(BaseComponent):
             if ok: self.btn.setText(t)
         elif action == link_act:
             self.import_script_folder()
+        elif action == compile_act:
+            self.compile_script()
             
         self.handle_base_actions(action, font_act, res_act, del_act)
 
     def apply_font(self, font):
         self.btn.setFont(font)
 
+    def compile_script(self):
+        """
+        Compiles Java, C, or C++ scripts using the script engine's compile method.
+        """
+        if not self.script_path:
+            QMessageBox.warning(self, "Error", "No script linked. Please import a script folder first.")
+            return
+        
+        if self.script_type == "python":
+            QMessageBox.information(self, "Info", "Python scripts do not require compilation.")
+            return
+        
+        # Import here to avoid circular dependencies
+        from app.core.script_engine import ScriptEngine
+        
+        engine = ScriptEngine()
+        success, message = engine.compile_script(self.script_path)
+        
+        if success:
+            self.is_compiled = True
+            QMessageBox.information(self, "Compilation Successful", message)
+        else:
+            self.is_compiled = False
+            QMessageBox.critical(self, "Compilation Failed", message)
+
     def import_script_folder(self):
         """ 
-        Allows the user to select an external folder. The system will copy it into 
-        the window's saved 'scripts' folder, tying it directly to this button.
+        Allows the user to select an external folder containing a script.
+        Supports: main.py (Python), Main.java (Java), Main.c (C), Main.cpp (C++)
+        The system will copy it into the window's saved 'scripts' folder, tying it directly to this button.
         """
-        src_dir = QFileDialog.getExistingDirectory(self, "Select Source Folder containing main.py")
+        src_dir = QFileDialog.getExistingDirectory(self, "Select Source Folder containing main.py, Main.java, Main.c, or Main.cpp")
         if not src_dir: return
 
-        if not os.path.exists(os.path.join(src_dir, "main.py")):
-            QMessageBox.warning(self, "Error", "Selected folder must contain a main.py file!")
+        # Check for supported script files
+        script_file = None
+        script_type = None
+        
+        if os.path.exists(os.path.join(src_dir, "main.py")):
+            script_file = "main.py"
+            script_type = "python"
+        elif os.path.exists(os.path.join(src_dir, "Main.java")):
+            script_file = "Main.java"
+            script_type = "java"
+        elif os.path.exists(os.path.join(src_dir, "Main.c")):
+            script_file = "Main.c"
+            script_type = "c"
+        elif os.path.exists(os.path.join(src_dir, "Main.cpp")):
+            script_file = "Main.cpp"
+            script_type = "cpp"
+        else:
+            QMessageBox.warning(self, "Error", "Selected folder must contain one of: main.py, Main.java, Main.c, or Main.cpp")
             return
 
         # Figure out our bundle name so we can save the script neatly structured
@@ -72,13 +126,22 @@ class WidgetButton(BaseComponent):
 
         try:
             if os.path.exists(dest_dir):
-                shutil.rmtree(dest_dir) # Overwrite if we are re-linking the script
+                shutil.rmtree(dest_dir)  # Overwrite if we are re-linking the script
             
             os.makedirs(os.path.dirname(dest_dir), exist_ok=True)
             shutil.copytree(src_dir, dest_dir)
             
-            self.script_path = os.path.join(dest_dir, "main.py")
-            QMessageBox.information(self, "Success", f"Folder imported to: {dest_dir}")
+            self.script_path = os.path.join(dest_dir, script_file)
+            self.script_type = script_type
+            self.is_compiled = False  # Reset compile status on new import
+            
+            msg = f"Folder imported to: {dest_dir}\n\nScript type: {script_type.upper()}"
+            
+            # For compiled languages, suggest compilation
+            if script_type in ["java", "c", "cpp"]:
+                msg += f"\n\nDon't forget to compile using the button's 'Compile' option!"
+            
+            QMessageBox.information(self, "Success", msg)
         except Exception as e:
             QMessageBox.critical(self, "Import Failed", f"Could not copy folder: {e}")
 
@@ -109,17 +172,34 @@ class WidgetButton(BaseComponent):
         data = super().to_dict()
         data["label"] = self.btn.text()
         data["script_path"] = self.script_path
+        data["script_type"] = self.script_type
+        data["is_compiled"] = self.is_compiled
         return data
 
     def from_dict(self, data):
         """ Restores button specific attributes from JSON load. """
         super().from_dict(data)
         self.btn.setText(data.get("label", "Run Script"))
+        self.script_type = data.get("script_type", "")
+        self.is_compiled = data.get("is_compiled", False)
         
         # Dynamically reconstruct path to protect against the user renaming the workspace upon import
         if data.get("script_path"):
             window_name = getattr(self.window(), "window_id", "default_window") 
             safe_btn_name = self.btn.text().replace(" ", "_")
-            self.script_path = os.path.join("user_workspaces", window_name, "scripts", safe_btn_name, "main.py")
+            
+            # Determine the correct file extension based on script_type
+            if self.script_type == "python":
+                filename = "main.py"
+            elif self.script_type == "java":
+                filename = "Main.java"
+            elif self.script_type == "c":
+                filename = "Main.c"
+            elif self.script_type == "cpp":
+                filename = "Main.cpp"
+            else:
+                filename = "main.py"  # Default fallback
+            
+            self.script_path = os.path.join("user_workspaces", window_name, "scripts", safe_btn_name, filename)
         else:
             self.script_path = ""

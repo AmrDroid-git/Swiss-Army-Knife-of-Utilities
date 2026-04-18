@@ -1,12 +1,15 @@
 import os
 import sys
 import shutil
+import platform
+import subprocess
 from PySide6.QtCore import QObject, QProcess, Signal
 
 class ScriptEngine(QObject):
     """
-    The Script Engine runs external python scripts without freezing the UI.
+    The Script Engine runs external scripts (Python, Java, C, C++) without freezing the UI.
     It uses PySide6's QProcess to handle asynchronous execution.
+    Supports cross-platform execution (Windows/Linux) and multi-language compilation.
     """
     
     # Signals to communicate back to the UI canvas or Console widget
@@ -23,10 +26,38 @@ class ScriptEngine(QObject):
         self.current_script_dir = ""
         self.current_outputs = []
         self.before_files = set()
+        self.current_script_type = ""  # Track: 'python', 'java', 'c', 'cpp'
+
+    def detect_script_type(self, script_path):
+        """
+        Determines the script type based on file extension.
+        Returns: 'python', 'java', 'c', 'cpp', or None if unknown
+        """
+        filename = os.path.basename(script_path)
+        if filename == "main.py":
+            return "python"
+        elif filename == "Main.java":
+            return "java"
+        elif filename == "Main.c":
+            return "c"
+        elif filename == "Main.cpp":
+            return "cpp"
+        return None
+
+    def get_python_executable(self):
+        """
+        Returns the appropriate Python executable name for the current platform.
+        Linux: 'python3', Windows: 'python'
+        """
+        if platform.system() == "Linux":
+            return "python3"
+        else:
+            return "python"
 
     def run_script(self, script_path, inputs, outputs):
         """
         Called when a WidgetButton emits the run_script_requested signal.
+        Handles Python, Java, C, and C++ scripts.
         """
         # Block concurrent overlapping runs for safety
         if self.process and self.process.state() == QProcess.Running:
@@ -38,6 +69,12 @@ class ScriptEngine(QObject):
         # Safety Check: If the script folder was deleted or missing from zip
         if not os.path.exists(self.current_script_dir):
             self.error_emitted.emit(f"CRITICAL ERROR: Script directory not found at {self.current_script_dir}. Did you forget to link the script?")
+            return
+        
+        # Detect script type
+        self.current_script_type = self.detect_script_type(script_path)
+        if not self.current_script_type:
+            self.error_emitted.emit(f"ERROR: Unknown script type. Supported: main.py, Main.java, Main.c, Main.cpp")
             return
             
         self.current_outputs = outputs
@@ -75,13 +112,62 @@ class ScriptEngine(QObject):
         
         # 3. Setup PySide6 Async QProcess
         self.process = QProcess(self)
-        self.process.setProgram(sys.executable) # Uses the current python.exe
         
-        # Combine the unbuffered flag (-u), the script name, and the arguments array
-        script_name = os.path.basename(script_path)
-        self.process.setArguments(["-u", script_name] + args)
+        # 4. Prepare command based on script type
+        if self.current_script_type == "python":
+            self.process.setProgram(self.get_python_executable())
+            script_name = os.path.basename(script_path)
+            self.process.setArguments(["-u", script_name] + args)
+            
+        elif self.current_script_type == "java":
+            # Find compiled Main.class file
+            class_path = os.path.join(self.current_script_dir, "Main.class")
+            if not os.path.exists(class_path):
+                self.error_emitted.emit(f"ERROR: Main.class not found. Please compile the Java script first using the 'Compile' option.")
+                self.process = None
+                return
+            
+            self.process.setProgram("java")
+            # Use "." as classpath since we're already in the script directory via setWorkingDirectory
+            self.process.setArguments(["-cp", ".", "Main"] + args)
+            
+        elif self.current_script_type == "c":
+            # Find compiled Main executable (or Main.exe on Windows)
+            exe_name = "Main.exe" if platform.system() == "Windows" else "Main"
+            exe_path = os.path.join(self.current_script_dir, exe_name)
+            if not os.path.exists(exe_path):
+                self.error_emitted.emit(f"ERROR: {exe_name} executable not found. Please compile the C script first using the 'Compile' option.")
+                self.process = None
+                return
+            
+            # On Linux, use stdbuf to unbuffer output for real-time display
+            if platform.system() == "Linux":
+                self.process.setProgram("stdbuf")
+                self.process.setArguments(["-oL", exe_path] + args)
+            else:
+                # Windows: run directly but output should flush due to fflush() calls
+                self.process.setProgram(exe_path)
+                self.process.setArguments(args)
+            
+        elif self.current_script_type == "cpp":
+            # Find compiled Main executable (or Main.exe on Windows)
+            exe_name = "Main.exe" if platform.system() == "Windows" else "Main"
+            exe_path = os.path.join(self.current_script_dir, exe_name)
+            if not os.path.exists(exe_path):
+                self.error_emitted.emit(f"ERROR: {exe_name} executable not found. Please compile the C++ script first using the 'Compile' option.")
+                self.process = None
+                return
+            
+            # On Linux, use stdbuf to unbuffer output for real-time display
+            if platform.system() == "Linux":
+                self.process.setProgram("stdbuf")
+                self.process.setArguments(["-oL", exe_path] + args)
+            else:
+                # Windows: run directly but output should flush due to fflush() calls
+                self.process.setProgram(exe_path)
+                self.process.setArguments(args)
         
-        # Set working directory safely using absolute path
+        # 5. Set working directory safely using absolute path
         self.process.setWorkingDirectory(os.path.abspath(self.current_script_dir))
         
         # Set environment for UTF-8 (important for catching stdout string cleanly)
@@ -95,7 +181,7 @@ class ScriptEngine(QObject):
         self.process.finished.connect(self.handle_finished)
         self.process.errorOccurred.connect(self.handle_error)
         
-        # 4. Start the async process! This does NOT freeze the PySide window!
+        # 6. Start the async process! This does NOT freeze the PySide window!
         self.execution_started.emit()
         self.process.start()
         
@@ -185,3 +271,92 @@ class ScriptEngine(QObject):
         if self.process and self.process.state() == QProcess.Running:
             # We must append a newline '\n' exactly as if the user physically hit Enter in a CMD prompt
             self.process.write((text + "\n").encode('utf-8'))
+
+    def compile_script(self, script_path):
+        """
+        Compiles Java, C, or C++ scripts.
+        Returns: (success, message)
+        """
+        script_type = self.detect_script_type(script_path)
+        script_dir = os.path.dirname(script_path)
+        
+        if script_type == "python":
+            return (True, "Python scripts do not require compilation.")
+        
+        elif script_type == "java":
+            java_file = os.path.join(script_dir, "Main.java")
+            if not os.path.exists(java_file):
+                return (False, "Main.java not found in the script folder.")
+            
+            try:
+                result = subprocess.run(
+                    ["javac", "Main.java"],
+                    cwd=os.path.abspath(script_dir),
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                if result.returncode == 0:
+                    return (True, "Java compilation successful!")
+                else:
+                    return (False, f"Java compilation failed:\n{result.stderr}")
+            except FileNotFoundError:
+                return (False, "javac not found. Please install Java JDK and add it to your system PATH.")
+            except Exception as e:
+                return (False, f"Compilation error: {str(e)}")
+        
+        elif script_type == "c":
+            c_file = os.path.join(script_dir, "Main.c")
+            if not os.path.exists(c_file):
+                return (False, "Main.c not found in the script folder.")
+            
+            try:
+                exe_name = "Main.exe" if platform.system() == "Windows" else "Main"
+                
+                # Determine compiler based on platform
+                compiler = "gcc"
+                
+                result = subprocess.run(
+                    [compiler, "Main.c", "-o", exe_name],
+                    cwd=os.path.abspath(script_dir),
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                if result.returncode == 0:
+                    return (True, f"C compilation successful! Executable: {exe_name}")
+                else:
+                    return (False, f"C compilation failed:\n{result.stderr}")
+            except FileNotFoundError:
+                return (False, "gcc not found. Please install MinGW/GCC and add it to your system PATH.")
+            except Exception as e:
+                return (False, f"Compilation error: {str(e)}")
+        
+        elif script_type == "cpp":
+            cpp_file = os.path.join(script_dir, "Main.cpp")
+            if not os.path.exists(cpp_file):
+                return (False, "Main.cpp not found in the script folder.")
+            
+            try:
+                exe_name = "Main.exe" if platform.system() == "Windows" else "Main"
+                
+                # Determine compiler based on platform
+                compiler = "g++"
+                
+                result = subprocess.run(
+                    [compiler, "Main.cpp", "-o", exe_name],
+                    cwd=os.path.abspath(script_dir),
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                if result.returncode == 0:
+                    return (True, f"C++ compilation successful! Executable: {exe_name}")
+                else:
+                    return (False, f"C++ compilation failed:\n{result.stderr}")
+            except FileNotFoundError:
+                return (False, "g++ not found. Please install MinGW/GCC and add it to your system PATH.")
+            except Exception as e:
+                return (False, f"Compilation error: {str(e)}")
+        
+        return (False, f"Unknown script type: {script_type}")

@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QPoint
 from app.widgets import (
     BaseComponent, WidgetButton, WidgetIText, WidgetOText,
     WidgetIFileLink, WidgetOFileLink, WidgetIFolderLink, WidgetOFolderLink,
-    WidgetConsole, WidgetInteractiveConsole, WidgetLabel
+    WidgetConsole, WidgetInteractiveConsole, WidgetLabel, WidgetRequirementsLink
 )
 from app.ui.edit_palette import ToolboxItem
 from app.core import package_manager
@@ -99,6 +99,8 @@ class EditorCanvas(QFrame):
             self.script_engine.stdout_emitted.connect(obj.append_text)
             self.script_engine.error_emitted.connect(obj.append_text)
             obj.stdin_submitted.connect(self.script_engine.send_input)
+        elif tid == "widget_requirements_link": 
+            obj = WidgetRequirementsLink(self, pos)
 
         if obj:
             obj.is_template = False
@@ -160,6 +162,7 @@ class CustomWindow(QWidget):
         s_lay.addWidget(ToolboxItem("📦 Safe Output Target", "widget_o_folder_link"))
         s_lay.addWidget(ToolboxItem("🖥️ System Console", "widget_console"))
         s_lay.addWidget(ToolboxItem("⌨️ Interactive Console", "widget_interactive_console"))
+        s_lay.addWidget(ToolboxItem("ⓘ Requirements Link", "widget_requirements_link"))
         s_lay.addStretch()
         
         self.content.addWidget(self.canvas)

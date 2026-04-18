@@ -1,0 +1,34 @@
+[
+    {
+        "comp_type": "widget_button",
+        "x": 446,
+        "y": 120,
+        "width": 160,
+        "height": 46,
+        "arg_order": 0,
+        "properties": {},
+        "label": "Run Script",
+        "script_path": "user_workspaces\\Ccounter\\scripts\\Run_Script\\Main.c",
+        "script_type": "c",
+        "is_compiled": true
+    },
+    {
+        "comp_type": "widget_console",
+        "x": 241,
+        "y": 264,
+        "width": 524,
+        "height": 214,
+        "arg_order": 0,
+        "properties": {}
+    },
+    {
+        "comp_type": "widget_i_text",
+        "x": 407,
+        "y": 59,
+        "width": 271,
+        "height": 44,
+        "arg_order": 0,
+        "properties": {},
+        "value": "2"
+    }
+]

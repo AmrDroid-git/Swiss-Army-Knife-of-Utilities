@@ -10,7 +10,9 @@
             "custom_font": "Segoe UI,22,-1,5,700,0,0,0,0,0,0,0,0,0,0,1,Bold"
         },
         "label": "Run Script",
-        "script_path": "user_workspaces\\addition\\scripts\\Run_Script\\main.py"
+        "script_path": "user_workspaces\\addition\\scripts\\Run_Script\\main.py",
+        "script_type": "",
+        "is_compiled": false
     },
     {
         "comp_type": "widget_i_text",
