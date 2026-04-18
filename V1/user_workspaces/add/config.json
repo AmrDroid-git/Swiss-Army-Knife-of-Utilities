@@ -1,0 +1,15 @@
+[
+    {
+        "comp_type": "widget_button",
+        "x": 381,
+        "y": 231,
+        "width": 352,
+        "height": 110,
+        "arg_order": 0,
+        "properties": {
+            "custom_font": "Segoe UI,36,-1,5,600,0,0,0,0,0,0,0,0,0,0,1,Semibold"
+        },
+        "label": "Run Script",
+        "script_path": ""
+    }
+]

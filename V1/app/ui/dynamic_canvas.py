@@ -47,7 +47,7 @@ class EditorCanvas(QFrame):
     def set_edit_mode(self, state):
         self.is_edit_mode = state
         if state:
-            self.setStyleSheet("background-color: #ffffff; border: 2px dashed #95a5a6; border-radius: 8px;")
+            self.setStyleSheet("background-color: #ffffff; border: none; border-radius: 8px;")
         else:
             self.setStyleSheet("background-color: #eef2f3; border: 2px solid #bdc3c7; border-radius: 8px;")
             

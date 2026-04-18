@@ -11,11 +11,12 @@ class WidgetConsole(BaseComponent):
         super().__init__(parent, "widget_console", pos)
         self.resize(400, 200)
         self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         
         # Setting up a read-only terminal-like text box
         self.console_output = QPlainTextEdit()
         self.console_output.setReadOnly(True)
-        self.console_output.setStyleSheet("background-color: black; color: #00FF00; font-family: Consolas, monospace;")
+        self.console_output.setStyleSheet("background-color: black; color: #00FF00;")
         self.layout.addWidget(self.console_output)
 
     def contextMenuEvent(self, event):
@@ -28,9 +29,12 @@ class WidgetConsole(BaseComponent):
             return
             
         menu = QMenu(self)
-        res_act, del_act = self.add_base_actions(menu)
+        font_act, res_act, del_act = self.add_base_actions(menu)
         action = menu.exec(event.globalPos())
-        self.handle_base_actions(action, res_act, del_act)
+        self.handle_base_actions(action, font_act, res_act, del_act)
+
+    def apply_font(self, font):
+        self.console_output.setFont(font)
 
     def append_text(self, text):
         """ Helper method for script engine to pump python stdout into the UI. """

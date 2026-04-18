@@ -13,6 +13,7 @@ class WidgetIText(BaseComponent):
         
         self.resize(220, 45)
         self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         
         self.entry = QLineEdit()
         self.entry.setPlaceholderText("INPUT TEXT")
@@ -32,7 +33,7 @@ class WidgetIText(BaseComponent):
         edit_act = menu.addAction("Edit Default Value")
         # Determines what position this argument will hold when sending to Python index
         order_act = menu.addAction(f"Set Arg Order ({self.arg_order})")
-        res_act, del_act = self.add_base_actions(menu)
+        font_act, res_act, del_act = self.add_base_actions(menu)
         
         action = menu.exec(event.globalPos())
         
@@ -43,7 +44,10 @@ class WidgetIText(BaseComponent):
             val, ok = QInputDialog.getInt(self, "Order", "Arg Index:", self.arg_order, 0, 100)
             if ok: self.arg_order = val
             
-        self.handle_base_actions(action, res_act, del_act)
+        self.handle_base_actions(action, font_act, res_act, del_act)
+
+    def apply_font(self, font):
+        self.entry.setFont(font)
 
     def get_value(self): 
         """ Called by the button execution sequence to fetch the text data """

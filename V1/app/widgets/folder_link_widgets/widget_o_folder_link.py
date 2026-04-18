@@ -14,6 +14,7 @@ class WidgetOFolderLink(BaseComponent):
         
         self.resize(220, 45)
         self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         
         self.entry = QLineEdit()
         self.entry.setPlaceholderText("OUTPUT FOLDER")
@@ -34,9 +35,12 @@ class WidgetOFolderLink(BaseComponent):
             return
             
         menu = QMenu(self)
-        res_act, del_act = self.add_base_actions(menu)
+        font_act, res_act, del_act = self.add_base_actions(menu)
         action = menu.exec(event.globalPos())
-        self.handle_base_actions(action, res_act, del_act)
+        self.handle_base_actions(action, font_act, res_act, del_act)
+
+    def apply_font(self, font):
+        self.entry.setFont(font)
 
     def browse(self):
         if self.is_edit_mode: return

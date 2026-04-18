@@ -9,6 +9,7 @@ class WidgetLabel(BaseComponent):
     def __init__(self, parent, pos, text="Text Label"):
         super().__init__(parent, "widget_label", pos)
         self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         
         # Create and setup the internal QLabel
         self.lbl = QLabel(text)
@@ -20,7 +21,7 @@ class WidgetLabel(BaseComponent):
         menu = QMenu(self)
         
         edit_act = menu.addAction("Edit Text")
-        res_act, del_act = self.add_base_actions(menu)
+        font_act, res_act, del_act = self.add_base_actions(menu)
         
         action = menu.exec(event.globalPos())
         
@@ -28,7 +29,10 @@ class WidgetLabel(BaseComponent):
             t, ok = QInputDialog.getText(self, "Edit", "Text:", text=self.lbl.text())
             if ok: self.lbl.setText(t)
             
-        self.handle_base_actions(action, res_act, del_act)
+        self.handle_base_actions(action, font_act, res_act, del_act)
+
+    def apply_font(self, font):
+        self.lbl.setFont(font)
 
     def to_dict(self):
         """ Include the label text when saving the widget layout. """

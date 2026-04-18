@@ -1,51 +1,56 @@
 [
     {
         "comp_type": "widget_button",
-        "x": 327,
-        "y": 319,
-        "width": 130,
-        "height": 50,
+        "x": 206,
+        "y": 243,
+        "width": 854,
+        "height": 103,
         "arg_order": 0,
-        "properties": {},
+        "properties": {
+            "custom_font": "Segoe UI,22,-1,5,700,0,0,0,0,0,0,0,0,0,0,1,Bold"
+        },
         "label": "Run Script",
         "script_path": "user_workspaces\\addition\\scripts\\Run_Script\\main.py"
     },
     {
-        "comp_type": "widget_label",
-        "x": 169,
-        "y": 154,
-        "width": 199,
-        "height": 50,
+        "comp_type": "widget_i_text",
+        "x": 116,
+        "y": 127,
+        "width": 388,
+        "height": 59,
         "arg_order": 0,
-        "properties": {},
-        "text": "hbibyyyyyy"
+        "properties": {
+            "custom_font": "Segoe UI,28,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+        },
+        "value": "66"
     },
     {
         "comp_type": "widget_i_text",
-        "x": 172,
-        "y": 190,
-        "width": 220,
-        "height": 44,
-        "arg_order": 0,
-        "properties": {},
-        "value": ""
-    },
-    {
-        "comp_type": "widget_i_text",
-        "x": 477,
-        "y": 187,
-        "width": 220,
-        "height": 44,
+        "x": 773,
+        "y": 123,
+        "width": 483,
+        "height": 40,
         "arg_order": 1,
-        "properties": {},
-        "value": ""
+        "properties": {
+            "custom_font": "Tempus Sans ITC,16,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+        },
+        "value": "5"
     },
     {
         "comp_type": "widget_o_text",
-        "x": 285,
-        "y": 462,
-        "width": 220,
-        "height": 44,
+        "x": 275,
+        "y": 401,
+        "width": 753,
+        "height": 97,
+        "arg_order": 0,
+        "properties": {}
+    },
+    {
+        "comp_type": "widget_interactive_console",
+        "x": 500,
+        "y": 511,
+        "width": 347,
+        "height": 196,
         "arg_order": 0,
         "properties": {}
     }

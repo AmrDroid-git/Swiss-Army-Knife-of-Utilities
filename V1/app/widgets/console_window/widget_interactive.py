@@ -21,13 +21,13 @@ class WidgetInteractiveConsole(BaseComponent):
         # Output Terminal Screen
         self.console_output = QPlainTextEdit()
         self.console_output.setReadOnly(True)
-        self.console_output.setStyleSheet("background-color: #1e1e1e; color: #00FF00; font-family: Consolas, monospace; border: none; padding: 5px;")
+        self.console_output.setStyleSheet("background-color: #1e1e1e; color: #00FF00; border: none; padding: 5px;")
         self.layout.addWidget(self.console_output)
         
         # User Input Bar (STDIN)
         self.console_input = QLineEdit()
         self.console_input.setPlaceholderText("Type input here and press Enter...")
-        self.console_input.setStyleSheet("background-color: #2d2d2d; color: white; font-family: Consolas, monospace; border: 1px solid #555; padding: 5px;")
+        self.console_input.setStyleSheet("background-color: #2d2d2d; color: white; border: 1px solid #555; padding: 5px;")
         
         # When user presses Enter, broadcast the text
         self.console_input.returnPressed.connect(self.submit_input)
@@ -42,9 +42,13 @@ class WidgetInteractiveConsole(BaseComponent):
             return
             
         menu = QMenu(self)
-        res_act, del_act = self.add_base_actions(menu)
+        font_act, res_act, del_act = self.add_base_actions(menu)
         action = menu.exec(event.globalPos())
-        self.handle_base_actions(action, res_act, del_act)
+        self.handle_base_actions(action, font_act, res_act, del_act)
+
+    def apply_font(self, font):
+        self.console_output.setFont(font)
+        self.console_input.setFont(font)
 
     def append_text(self, text):
         """ Appends strings physically returning from the running python script. """

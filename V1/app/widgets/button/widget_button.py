@@ -18,6 +18,7 @@ class WidgetButton(BaseComponent):
         super().__init__(parent, "widget_button", pos)
         self.resize(130, 50)
         self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         
         # Inner button visual
         self.btn = QPushButton(label)
@@ -35,7 +36,7 @@ class WidgetButton(BaseComponent):
         link_act = menu.addAction("Import & Link Script Folder")
         
         # Append the standard parent actions (Resize, Delete)
-        res_act, del_act = self.add_base_actions(menu)
+        font_act, res_act, del_act = self.add_base_actions(menu)
         
         action = menu.exec(event.globalPos())
         
@@ -45,7 +46,10 @@ class WidgetButton(BaseComponent):
         elif action == link_act:
             self.import_script_folder()
             
-        self.handle_base_actions(action, res_act, del_act)
+        self.handle_base_actions(action, font_act, res_act, del_act)
+
+    def apply_font(self, font):
+        self.btn.setFont(font)
 
     def import_script_folder(self):
         """ 
