@@ -31,9 +31,9 @@ class WidgetIFileLink(BaseComponent):
         """ Context menu supports altering default arg and default string logic. """
         if not self.is_edit_mode:
             menu = QMenu(self)
-        clear_act = menu.addAction(t("clear_content"))
-        if menu.exec(event.globalPos()) == clear_act:
-            self.set_value("")
+            clear_act = menu.addAction(t("clear_content"))
+            if menu.exec(event.globalPos()) == clear_act:
+                self.set_value("")
             return
             
         menu = QMenu(self)
@@ -49,6 +49,7 @@ class WidgetIFileLink(BaseComponent):
             if ok: self.entry.setText(text_val)
         elif action == order_act:
             val, ok = QInputDialog.getInt(self, t("order_dialog_title"), t("order_dialog_prompt"), self.arg_order, 0, 100)
+            if ok: self.arg_order = val
             
         self.handle_base_actions(action, font_act, res_act, del_act)
 

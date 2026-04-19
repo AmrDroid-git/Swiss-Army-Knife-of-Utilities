@@ -55,9 +55,10 @@ class BaseComponent(QWidget):
         # Provide Word/PPT style visual bounding box outlines during Edit Mode
         if enabled:
             self.setAttribute(Qt.WA_StyledBackground, True)
-            self.setStyleSheet("BaseComponent { border: 2px dashed #000000; border-radius: 4px; }")
+            self.setStyleSheet("BaseComponent { border: 2px dashed #6366f1; border-radius: 4px; }")
         else:
-            self.setStyleSheet("BaseComponent { border: none; }")
+            self.setAttribute(Qt.WA_StyledBackground, False)
+            self.setStyleSheet("")  # Clear, let the theme and child widgets decide
             
         for child in self.findChildren(QWidget):
             if child is not self:

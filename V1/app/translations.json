@@ -158,7 +158,14 @@
       "folder_input_order_prompt": "Arg Index:",
       "select_input_folder_dialog": "Select Input Folder",
       "select_output_folder_dialog": "Select Output Folder",
-      "select_input_file_dialog": "Select Input File"
+      "select_input_file_dialog": "Select Input File",
+      "select_theme": "Select Theme",
+      "theme_white": "White (Normal)",
+      "theme_dark": "Dark Mode",
+      "theme_hacking": "Hacking Mode",
+      "theme_applied": "Theme applied: {theme_name}",
+      "zoom_in": "🔍 Zoom In (+)",
+      "zoom_out": "🔍 Zoom Out (-)"
     },
     "fr": {
       "file": "📁 Fichier",
@@ -307,7 +314,14 @@
       "change_font": "Changer la Police",
       "resize": "Redimensionner",
       "delete": "Supprimer",
-      "no_script_linked": "Aucun script lié. Veuillez d'abord importer un dossier de script."
+      "no_script_linked": "Aucun script lié. Veuillez d'abord importer un dossier de script.",
+      "select_theme": "Sélectionner le Thème",
+      "theme_white": "Blanc (Normal)",
+      "theme_dark": "Mode Sombre",
+      "theme_hacking": "Mode Hack",
+      "theme_applied": "Thème appliqué: {theme_name}",
+      "zoom_in": "🔍 Zoom Plus (+)",
+      "zoom_out": "🔍 Zoom Moins (-)"
     },
     "ar": {
       "file": "📁 ملف",
@@ -456,7 +470,12 @@
       "change_font": "تغيير الخط",
       "resize": "تغيير الحجم",
       "delete": "حذف",
-      "no_script_linked": "لم يتم ربط أي سكريبت. يرجى استيراد مجلد سكريبت أولاً."
+      "no_script_linked": "لم يتم ربط أي سكريبت. يرجى استيراد مجلد سكريبت أولاً.",
+      "select_theme": "اختر المظهر",
+      "theme_white": "أبيض (عادي)",
+      "theme_dark": "الوضع الداكن",
+      "theme_hacking": "وضع الاختراق",
+      "theme_applied": "تم تطبيق المظهر: {theme_name}"
     }
   }
 }

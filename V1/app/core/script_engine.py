@@ -266,6 +266,13 @@ class ScriptEngine(QObject):
             self.process = None # Cleanup object reference
 
 
+    def kill(self):
+        """Forcefully terminate the running process if one is active."""
+        if self.process and self.process.state() != QProcess.NotRunning:
+            self.process.kill()
+            self.process.waitForFinished(2000)
+            self.process = None
+
     def send_input(self, text):
         """ Pipes user-submitted strings directly into the process's standard input stream in real-time. """
         if self.process and self.process.state() == QProcess.Running:

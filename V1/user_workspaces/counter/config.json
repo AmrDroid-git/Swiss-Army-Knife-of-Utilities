@@ -1,31 +1,34 @@
 [
     {
         "comp_type": "widget_i_text",
-        "x": 163,
-        "y": 101,
-        "width": 220,
-        "height": 45,
+        "x": 123,
+        "y": 80,
+        "width": 166,
+        "height": 35,
         "arg_order": 0,
         "properties": {},
         "value": "6"
     },
     {
         "comp_type": "widget_button",
-        "x": 202,
-        "y": 173,
-        "width": 130,
-        "height": 50,
+        "x": 152,
+        "y": 137,
+        "width": 98,
+        "height": 39,
         "arg_order": 0,
         "properties": {},
         "label": "Run Script",
-        "script_path": "user_workspaces\\counter\\scripts\\Run_Script\\main.py"
+        "script_path": "",
+        "script_type": "",
+        "is_compiled": false,
+        "script_folder_name": ""
     },
     {
         "comp_type": "widget_console",
-        "x": 38,
-        "y": 282,
-        "width": 400,
-        "height": 200,
+        "x": 28,
+        "y": 223,
+        "width": 302,
+        "height": 158,
         "arg_order": 0,
         "properties": {}
     }

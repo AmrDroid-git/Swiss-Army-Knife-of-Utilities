@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Qt, QMimeData, QByteArray, QDataStream, QIODevice, QPoint
+from PySide6.QtCore import Qt, QMimeData, QPoint
 from PySide6.QtGui import QDrag, QPixmap
 from PySide6.QtCore import QSize
 
@@ -7,22 +7,28 @@ class ToolboxItem(QLabel):
     """
     These are the visual buttons residing inside the Edit Mode Toolbar.
     They initiate Drag and Drop QDrag events exactly like Qt Designer.
+    Styling is intentionally kept neutral so the active theme controls appearance.
     """
     def __init__(self, text, type_id):
         super().__init__(text)
         self.type_id = type_id
         
-        # Premium dark styling
+        # Use a subtle accent border to make items visually distinct without
+        # hardcoding colors — the theme's QLabel rule handles text/background.
         self.setStyleSheet("""
-            background: #2c3e50; 
-            color: white; 
-            padding: 12px; 
-            border-radius: 4px; 
-            margin: 2px;
-            font-weight: bold;
+            QLabel {
+                padding: 10px 12px;
+                border-radius: 5px;
+                margin: 2px;
+                font-weight: 600;
+                border: 1px solid rgba(128, 128, 128, 0.25);
+            }
+            QLabel:hover {
+                border-color: rgba(128, 128, 128, 0.6);
+            }
         """)
         self.setAlignment(Qt.AlignCenter)
-        self.setMinimumHeight(50)
+        self.setMinimumHeight(44)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:

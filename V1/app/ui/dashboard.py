@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QPushButto
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from app.ui.dynamic_canvas import CustomWindow
-from app.core import package_manager, group_manager
+from app.core import package_manager, group_manager, theme_manager
 from app.translator import get_translator, t, get_language_signal
 
 class Dashboard(QMainWindow):
@@ -17,55 +17,9 @@ class Dashboard(QMainWindow):
         super().__init__()
         self.setWindowTitle("Visual Script Builder - Universal Dashboard")
         self.resize(700, 750)
-        self.setStyleSheet("""
-            QMainWindow { 
-                background-color: #ecf0f1; 
-            }
-            QMenuBar {
-                background-color: #f5f5f5;
-                color: #2c3e50;
-                border-bottom: 1px solid #bdc3c7;
-            }
-            QMenuBar::item:selected {
-                background-color: #3498db;
-                color: white;
-            }
-            QMenu {
-                background-color: #ffffff;
-                color: #2c3e50;
-                border: 1px solid #bdc3c7;
-            }
-            QMenu::item:selected {
-                background-color: #3498db;
-                color: white;
-            }
-            QPushButton { 
-                background-color: #3498db; 
-                color: white; 
-                border: none; 
-                padding: 8px 14px; 
-                border-radius: 4px; 
-                font-size: 12px;
-                font-weight: bold; 
-            }
-            QPushButton:hover { background-color: #2980b9; }
-            QPushButton:pressed { background-color: #1f618d; }
-            QTreeWidget { 
-                background: white; 
-                border: 1px solid #bdc3c7; 
-                border-radius: 6px; 
-                font-size: 14px; 
-                padding: 5px;
-            }
-            QTreeWidget::item { 
-                padding: 6px; 
-                border-bottom: 1px solid #eee;
-            }
-            QTreeWidget::item:selected { 
-                background-color: #3498db; 
-                color: white; 
-            }
-        """)
+        
+        # Theme is applied globally via QApplication in main.py.
+        # No per-window stylesheet needed here.
         
         # Create central widget and layout
         central_widget = QWidget()
@@ -94,7 +48,6 @@ class Dashboard(QMainWindow):
         edit_menu.addSeparator()
         edit_menu.addAction(t("delete_window"), self.delete_selected_window)
         
-        # VIEW MENU
         view_menu = menubar.addMenu(t("view"))
         view_menu.addAction(t("open_selected"), self.open_win)
         view_menu.addAction(t("move_to_group"), self.move_selected_to_group)
@@ -106,7 +59,7 @@ class Dashboard(QMainWindow):
         
         # ===== HEADER =====
         self.header = QLabel(f"<b>{t('my_workspace')}</b>")
-        self.header.setStyleSheet("font-size: 18px; color: #2c3e50; padding: 8px 0px; font-weight: bold;")
+        self.header.setStyleSheet("font-size: 18px; padding: 8px 0px; font-weight: bold;")
         lay.addWidget(self.header)
         
         # Central tree widget for grouped projects
@@ -455,8 +408,62 @@ class Dashboard(QMainWindow):
                 QMessageBox.critical(self, t("error"), f"{t('failed_to_export')}:\n{e}")
     
     def show_appearance_settings(self):
-        """Show appearance settings (placeholder for now)."""
-        QMessageBox.information(self, t("appearance"), t("appearance_coming_soon"))
+        """Show theme selection dialog."""
+        tm = theme_manager.get_theme_manager()
+        
+        # Create theme selection dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle(t("appearance"))
+        dialog.resize(300, 140)
+        
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(12, 12, 12, 12)
+        
+        # Label
+        label = QLabel(t("select_theme") + ":")
+        layout.addWidget(label)
+        
+        # Combo box for theme selection
+        combo = QComboBox()
+        available_themes = tm.list_themes_with_names()
+        for theme_id, theme_name in available_themes:
+            combo.addItem(theme_name, theme_id)
+        
+        # Set current theme
+        current_idx = combo.findData(tm.current_theme)
+        if current_idx >= 0:
+            combo.setCurrentIndex(current_idx)
+        
+        layout.addWidget(combo)
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        btn_ok = QPushButton("OK")
+        btn_cancel = QPushButton(t("close"))
+        btn_ok.clicked.connect(dialog.accept)
+        btn_cancel.clicked.connect(dialog.reject)
+        btn_layout.addWidget(btn_ok)
+        btn_layout.addWidget(btn_cancel)
+        layout.addLayout(btn_layout)
+        
+        if dialog.exec():
+            selected_theme_id = combo.currentData()
+            tm.set_current_theme(selected_theme_id)
+            # Apply theme to current dashboard
+            self.apply_theme(selected_theme_id)
+            QMessageBox.information(self, t("success"), t("theme_applied").format(theme_name=combo.currentText()))
+    
+    def apply_theme(self, theme_id):
+        """Apply a theme to the entire application (dashboard + all open project windows)."""
+        from PySide6.QtWidgets import QApplication
+        tm = theme_manager.get_theme_manager()
+        stylesheet = tm.get_stylesheet(theme_id)
+        # Apply at application level so ALL windows inherit
+        QApplication.instance().setStyleSheet(stylesheet)
+        # Save the theme preference
+        tm.save_theme_preference()
+        # Clean up any closed windows from the tracking list
+        self.active_windows = [w for w in self.active_windows if w.isVisible()]
     
     def show_language_dialog(self):
         """Show language selection dialog."""

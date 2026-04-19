@@ -17,7 +17,10 @@
         "arg_order": 0,
         "properties": {},
         "label": "Run Script",
-        "script_path": "user_workspaces\\folderSize\\scripts\\Run_Script\\main.py"
+        "script_path": "",
+        "script_type": "",
+        "is_compiled": false,
+        "script_folder_name": ""
     },
     {
         "comp_type": "widget_i_folder_link",

@@ -17,11 +17,8 @@ class EditorCanvas(QFrame):
         super().__init__()
         self.setAcceptDrops(True)
         # Add basic grid line appearance for editing
-        self.setStyleSheet("""
-            background-color: #fdfdfd; 
-            border: 2px dashed #bdc3c7; 
-            border-radius: 8px;
-        """)
+        # Let the theme stylesheet handle the canvas background
+        self.setStyleSheet("EditorCanvas { border: 2px dashed #9ca3af; border-radius: 8px; }")
         self.is_edit_mode = False
         self.script_engine = script_engine
         
@@ -49,12 +46,12 @@ class EditorCanvas(QFrame):
     def set_edit_mode(self, state):
         self.is_edit_mode = state
         if state:
-            self.setStyleSheet("background-color: #ffffff; border: none; border-radius: 8px;")
+            self.setStyleSheet("EditorCanvas { border: 2px dashed #6366f1; border-radius: 8px; }")
         else:
             # Reset canvas cursor when exiting edit mode
             from PySide6.QtCore import Qt
             self.setCursor(Qt.ArrowCursor)
-            self.setStyleSheet("background-color: #eef2f3; border: 2px solid #bdc3c7; border-radius: 8px;")
+            self.setStyleSheet("EditorCanvas { border: 2px dashed #9ca3af; border-radius: 8px; }")
             
         for c in self.findChildren(BaseComponent): 
             c.set_edit_mode(state)
@@ -126,6 +123,8 @@ class CustomWindow(QWidget):
         self.setWindowTitle(f"Project Workspace: {window_id.replace('_',' ')}")
         self.resize(1100, 750)
         
+        # Theme comes from the application-level stylesheet applied in main.py — no override needed here.
+        
         # Establishing Core Asynchronous Execution Engine
         self.engine = ScriptEngine()
         
@@ -135,17 +134,14 @@ class CustomWindow(QWidget):
         nav = QHBoxLayout()
         self.edit_btn = QPushButton(t("design_mode"))
         self.edit_btn.setCheckable(True)
-        self.edit_btn.setStyleSheet("""
-            QPushButton:checked { background-color: #e74c3c; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; }
-            QPushButton { background-color: #2980b9; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; }
-        """)
         self.edit_btn.clicked.connect(self.toggle)
         
         save_btn = QPushButton(t("save_project"))
-        save_btn.setStyleSheet("background-color: #27ae60; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold;")
         save_btn.clicked.connect(lambda: package_manager.save_window(self.window_id, self.canvas))
         
-        nav.addWidget(QLabel(f"<h2 style='margin:0; color:#2c3e50;'>{window_id.replace('_',' ').upper()}</h2>"))
+        title_label = QLabel(window_id.replace('_', ' ').upper())
+        title_label.setStyleSheet("font-size: 16px; font-weight: bold; padding: 4px 0px;")
+        nav.addWidget(title_label)
         nav.addStretch()
         nav.addWidget(self.edit_btn)
         nav.addWidget(save_btn)
@@ -160,12 +156,7 @@ class CustomWindow(QWidget):
         self.sidebar_container.setWidgetResizable(True)
         self.sidebar_container.setMinimumWidth(200)
         self.sidebar_container.setMaximumWidth(250)
-        self.sidebar_container.setStyleSheet("""
-            QScrollArea {
-                border: 1px solid #bdc3c7;
-                background-color: #f0f0f0;
-            }
-        """)
+        # Sidebar inherits theme from application stylesheet
         
         self.sidebar = QWidget()
         self.sidebar_container.setWidget(self.sidebar)
@@ -216,5 +207,7 @@ class CustomWindow(QWidget):
         self.sidebar_container.setVisible(state)
 
     def closeEvent(self, event):
+        # Kill any running process before closing to prevent QProcess orphan warning
+        self.engine.kill()
         package_manager.save_window(self.window_id, self.canvas)
         event.accept()

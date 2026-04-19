@@ -149,7 +149,8 @@ class WidgetRequirementsLink(BaseComponent):
         font.setUnderline(True)
         font.setPointSize(10)
         self.lbl.setFont(font)
-        self.lbl.setStyleSheet("color: #0078d4; cursor: pointer;")
+        self.lbl.setStyleSheet("color: #0078d4;")
+        self.lbl.setCursor(Qt.PointingHandCursor)
         self.layout.addWidget(self.lbl)
         
         self.md_file_path = ""  # Path to linked markdown file
@@ -268,40 +269,7 @@ class WidgetRequirementsLink(BaseComponent):
         dialog = QDialog(self)
         dialog.setWindowTitle(self.widget_name)
         dialog.resize(900, 700)
-        dialog.setStyleSheet("""
-            QDialog {
-                background-color: #f5f5f5;
-            }
-            QTextBrowser {
-                background-color: #ffffff;
-                color: #000000;
-                border: 1px solid #d0d0d0;
-                padding: 10px;
-                font: 10pt 'Segoe UI', 'Arial';
-            }
-            QTextEdit {
-                background-color: #000000;
-                color: #00ff00;
-                border: 1px solid #d0d0d0;
-                font: 9pt 'Courier New', 'Monospace';
-                padding: 5px;
-            }
-            QPushButton {
-                background-color: #0078d4;
-                color: #ffffff;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-                font-size: 11pt;
-            }
-            QPushButton:hover {
-                background-color: #1084d8;
-            }
-            QPushButton:pressed {
-                background-color: #005a9e;
-            }
-        """)
+        # Inherits application theme stylesheet — no override needed
         
         layout = QVBoxLayout(dialog)
         

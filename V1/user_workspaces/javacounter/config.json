@@ -18,9 +18,10 @@
         "arg_order": 0,
         "properties": {},
         "label": "Run Script",
-        "script_path": "user_workspaces\\javacounter\\scripts\\Run_Script\\Main.java",
+        "script_path": "",
         "script_type": "java",
-        "is_compiled": true
+        "is_compiled": true,
+        "script_folder_name": ""
     },
     {
         "comp_type": "widget_console",
