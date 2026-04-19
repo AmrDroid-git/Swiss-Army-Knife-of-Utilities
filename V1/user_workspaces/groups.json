@@ -21,7 +21,7 @@
         },
         {
             "name": "coutner",
-            "expanded": false,
+            "expanded": true,
             "windows": [
                 "pythoncounter",
                 "Ccounter"

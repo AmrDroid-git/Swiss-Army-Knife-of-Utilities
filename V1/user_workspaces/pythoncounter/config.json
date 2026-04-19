@@ -1,10 +1,10 @@
 [
     {
         "comp_type": "widget_button",
-        "x": 356,
-        "y": 205,
-        "width": 130,
-        "height": 45,
+        "x": 225,
+        "y": 161,
+        "width": 313,
+        "height": 44,
         "arg_order": 0,
         "properties": {},
         "label": "Run Script",
@@ -15,9 +15,9 @@
     },
     {
         "comp_type": "widget_i_text",
-        "x": 266,
-        "y": 101,
-        "width": 316,
+        "x": 233,
+        "y": 69,
+        "width": 297,
         "height": 49,
         "arg_order": 0,
         "properties": {},
@@ -25,10 +25,10 @@
     },
     {
         "comp_type": "widget_console",
-        "x": 189,
-        "y": 317,
-        "width": 459,
-        "height": 214,
+        "x": 219,
+        "y": 328,
+        "width": 521,
+        "height": 259,
         "arg_order": 0,
         "properties": {}
     }

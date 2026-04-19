@@ -16,7 +16,9 @@ class BaseComponent(QWidget):
         self.arg_order = 0              # Determines argument order passed to scripts
         self.properties = {}            # Dictionary catching custom JSON attributes
         self.move(pos)                  # Initial spawn position
-        self._drag_pos = None           # Internal tracker for mouse dragging
+        
+        self._drag_pos = None           # Internal tracker for mouse dragging hotspot
+        self._global_drag_offset = None # Internal tracker for smooth global dragging
         
         # Geometrical mapping percentages!
         self._rel_x = 0.0
@@ -50,6 +52,7 @@ class BaseComponent(QWidget):
         if not enabled:
             self.setCursor(Qt.ArrowCursor)
             self._drag_pos = None
+            self._global_drag_offset = None
             self._resize_dir = None
         
         # Provide Word/PPT style visual bounding box outlines during Edit Mode
@@ -97,8 +100,11 @@ class BaseComponent(QWidget):
             # Only trigger move mode if we aren't perfectly on an edge
             if not self._resize_dir:
                 self._drag_pos = event.pos()
+                # Compute offset using global coordinates to prevent feedback loop glitching
+                self._global_drag_offset = event.globalPosition().toPoint() - self.pos()
             else:
                 self._drag_pos = None
+                self._global_drag_offset = None
                 
         super().mousePressEvent(event)
 
@@ -187,14 +193,19 @@ class BaseComponent(QWidget):
                         
                         drag.exec(Qt.CopyAction)
                 else:
-                    # Normal movement across the canvas for already-placed widgets
-                    self.move(self.mapToParent(event.pos() - self._drag_pos))
+                    # Normal movement across the canvas for already-placed widgets using smooth global positioning
+                    if self._global_drag_offset is not None:
+                        new_global_pos = event.globalPosition().toPoint()
+                        self.move(new_global_pos - self._global_drag_offset)
+                    else:
+                        self.move(self.mapToParent(event.pos() - self._drag_pos))
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         """ Clears the drag state once the user drops the widget precisely like Qt Designer. """
         if event.button() == Qt.LeftButton:
             self._drag_pos = None
+            self._global_drag_offset = None
             self._resize_dir = None
             self.setCursor(Qt.ArrowCursor)
             self.update_relative_geometry() # Anchor the new location securely via mathematical proportions instantly
