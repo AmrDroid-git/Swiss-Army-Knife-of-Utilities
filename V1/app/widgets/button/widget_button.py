@@ -4,6 +4,7 @@ import platform
 from PySide6.QtWidgets import QPushButton, QHBoxLayout, QMenu, QFileDialog, QInputDialog, QMessageBox
 from PySide6.QtCore import Qt, Signal
 from app.widgets.base_widget import BaseComponent
+from app.translator import t
 
 class WidgetButton(BaseComponent):
     """
@@ -38,13 +39,14 @@ class WidgetButton(BaseComponent):
         if not self.is_edit_mode: return
         menu = QMenu(self)
         
-        rename_act = menu.addAction("Rename Button")
-        link_act = menu.addAction("Import & Link Script Folder")
+        rename_act = menu.addAction(t("button_rename"))
+        link_act = menu.addAction(t("import_link_script"))
         
-        # Add Compile option if a script is linked
+        # Add Compile option ONLY if a script is linked AND it's a compiled language
         compile_act = None
         if self.script_path and self.script_type in ["java", "c", "cpp"]:
-            compile_act = menu.addAction("🔨 Compile Script")
+            menu.addSeparator()  # Visual separator before compile
+            compile_act = menu.addAction(t("compile_script"))
         
         # Append the standard parent actions (Resize, Delete)
         font_act, res_act, del_act = self.add_base_actions(menu)
@@ -52,7 +54,7 @@ class WidgetButton(BaseComponent):
         action = menu.exec(event.globalPos())
         
         if action == rename_act:
-            new_name, ok = QInputDialog.getText(self, "Rename", "Text:", text=self.btn.text())
+            new_name, ok = QInputDialog.getText(self, t("rename_dialog_title"), t("rename_dialog_prompt"), text=self.btn.text())
             if ok and new_name:
                 # If a script folder is linked, rename it on disk too
                 if self.script_folder_name:
@@ -60,7 +62,8 @@ class WidgetButton(BaseComponent):
                 self.btn.setText(new_name)
         elif action == link_act:
             self.import_script_folder()
-        elif action == compile_act:
+        elif compile_act and action == compile_act:
+            # Only trigger compile if compile_act exists AND user actually clicked it (not cancelled)
             self.compile_script()
             
         self.handle_base_actions(action, font_act, res_act, del_act)
@@ -105,18 +108,18 @@ class WidgetButton(BaseComponent):
                 
                 self.script_path = os.path.join(new_folder_path, filename)
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Could not rename script folder: {e}")
+            QMessageBox.warning(self, t("error"), f"{t('could_not_rename_folder').format(e=e)}")
 
     def compile_script(self):
         """
         Compiles Java, C, or C++ scripts using the script engine's compile method.
         """
         if not self.script_path:
-            QMessageBox.warning(self, "Error", "No script linked. Please import a script folder first.")
+            QMessageBox.warning(self, t("error"), t("no_script_linked"))
             return
         
         if self.script_type == "python":
-            QMessageBox.information(self, "Info", "Python scripts do not require compilation.")
+            QMessageBox.information(self, t("info"), t("python_no_compile"))
             return
         
         # Import here to avoid circular dependencies
@@ -127,10 +130,10 @@ class WidgetButton(BaseComponent):
         
         if success:
             self.is_compiled = True
-            QMessageBox.information(self, "Compilation Successful", message)
+            QMessageBox.information(self, t("compilation_successful"), message)
         else:
             self.is_compiled = False
-            QMessageBox.critical(self, "Compilation Failed", message)
+            QMessageBox.critical(self, t("compilation_failed"), message)
 
     def import_script_folder(self):
         """ 
@@ -138,7 +141,7 @@ class WidgetButton(BaseComponent):
         Supports: main.py (Python), Main.java (Java), Main.c (C), Main.cpp (C++)
         The system will copy it into the window's saved 'scripts' folder, tying it directly to this button.
         """
-        src_dir = QFileDialog.getExistingDirectory(self, "Select Source Folder containing main.py, Main.java, Main.c, or Main.cpp")
+        src_dir = QFileDialog.getExistingDirectory(self, t("select_source_folder"))
         if not src_dir: return
 
         # Check for supported script files
@@ -158,7 +161,7 @@ class WidgetButton(BaseComponent):
             script_file = "Main.cpp"
             script_type = "cpp"
         else:
-            QMessageBox.warning(self, "Error", "Selected folder must contain one of: main.py, Main.java, Main.c, or Main.cpp")
+            QMessageBox.warning(self, t("error"), t("folder_must_contain"))
             return
 
         # Figure out our bundle name so we can save the script neatly structured
@@ -184,11 +187,11 @@ class WidgetButton(BaseComponent):
             
             # For compiled languages, suggest compilation
             if script_type in ["java", "c", "cpp"]:
-                msg += f"\n\nDon't forget to compile using the button's 'Compile' option!"
+                msg += f"\n\n{t('import_link_script')}!"
             
-            QMessageBox.information(self, "Success", msg)
+            QMessageBox.information(self, t("import_success"), msg)
         except Exception as e:
-            QMessageBox.critical(self, "Import Failed", f"Could not copy folder: {e}")
+            QMessageBox.critical(self, t("import_failed"), f"{t('could_not_copy').format(e=e)}")
 
     def execute(self):
         """

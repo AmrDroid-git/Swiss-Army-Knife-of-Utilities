@@ -51,6 +51,9 @@ class EditorCanvas(QFrame):
         if state:
             self.setStyleSheet("background-color: #ffffff; border: none; border-radius: 8px;")
         else:
+            # Reset canvas cursor when exiting edit mode
+            from PySide6.QtCore import Qt
+            self.setCursor(Qt.ArrowCursor)
             self.setStyleSheet("background-color: #eef2f3; border: 2px solid #bdc3c7; border-radius: 8px;")
             
         for c in self.findChildren(BaseComponent): 
@@ -66,7 +69,7 @@ class EditorCanvas(QFrame):
         if not self.is_edit_mode:
             from PySide6.QtWidgets import QMenu
             menu = QMenu(self)
-            clear_act = menu.addAction("🧹 Clear All Fields & Console")
+            clear_act = menu.addAction(t("clear_all_fields"))
             if menu.exec(event.globalPos()) == clear_act:
                 for c in self.findChildren(BaseComponent):
                     if hasattr(c, 'clear_text'): c.clear_text()

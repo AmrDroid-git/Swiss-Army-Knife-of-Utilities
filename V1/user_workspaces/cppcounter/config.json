@@ -1,22 +1,23 @@
 [
     {
         "comp_type": "widget_button",
-        "x": 307,
+        "x": 234,
         "y": 159,
-        "width": 171,
+        "width": 130,
         "height": 50,
         "arg_order": 0,
         "properties": {},
         "label": "Run Script",
-        "script_path": "user_workspaces\\cppcounter\\scripts\\Run_Script\\Main.cpp",
+        "script_path": "",
         "script_type": "cpp",
-        "is_compiled": true
+        "is_compiled": true,
+        "script_folder_name": ""
     },
     {
         "comp_type": "widget_i_text",
-        "x": 218,
+        "x": 166,
         "y": 74,
-        "width": 371,
+        "width": 282,
         "height": 69,
         "arg_order": 0,
         "properties": {},
@@ -24,9 +25,9 @@
     },
     {
         "comp_type": "widget_console",
-        "x": 127,
+        "x": 96,
         "y": 229,
-        "width": 547,
+        "width": 417,
         "height": 204,
         "arg_order": 0,
         "properties": {}

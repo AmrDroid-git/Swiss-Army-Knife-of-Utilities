@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QLineEdit, QHBoxLayout, QMenu
 from PySide6.QtCore import Qt
 from app.widgets.base_widget import BaseComponent
+from app.translator import t
 
 class WidgetOText(BaseComponent):
     """
@@ -18,14 +19,14 @@ class WidgetOText(BaseComponent):
         
         self.entry = QLineEdit()
         self.entry.setReadOnly(True) # Block user interference
-        self.entry.setPlaceholderText("OUTPUT TEXT")
+        self.entry.setPlaceholderText(t("output_text"))
         self.layout.addWidget(self.entry)
 
     def contextMenuEvent(self, event):
         """ Generic right click for outputs; no argument index needed. """
         if not self.is_edit_mode:
             menu = QMenu(self)
-            clear_act = menu.addAction("Clear Content")
+            clear_act = menu.addAction(t("clear_content"))
             if menu.exec(event.globalPos()) == clear_act:
                 self.set_value("")
             return

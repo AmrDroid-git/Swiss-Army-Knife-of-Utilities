@@ -456,7 +456,7 @@ class Dashboard(QMainWindow):
     
     def show_appearance_settings(self):
         """Show appearance settings (placeholder for now)."""
-        QMessageBox.information(self, t("appearance"), "Appearance settings coming soon!")
+        QMessageBox.information(self, t("appearance"), t("appearance_coming_soon"))
     
     def show_language_dialog(self):
         """Show language selection dialog."""

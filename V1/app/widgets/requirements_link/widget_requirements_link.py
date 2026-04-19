@@ -162,7 +162,7 @@ class WidgetRequirementsLink(BaseComponent):
         menu = QMenu(self)
         
         link_act = menu.addAction(t("link_markdown"))
-        rename_act = menu.addAction("Rename Label")
+        rename_act = menu.addAction(t("button_rename"))
         
         # Append the standard parent actions (Resize, Delete)
         font_act, res_act, del_act = self.add_base_actions(menu)
@@ -172,10 +172,10 @@ class WidgetRequirementsLink(BaseComponent):
         if action == link_act:
             self.link_markdown_file()
         elif action == rename_act:
-            t_text, ok = QInputDialog.getText(self, "Rename", "Label Text:", text=self.lbl.text())
+            text_val, ok = QInputDialog.getText(self, t("rename_dialog_title"), t("rename_dialog_prompt"), text=self.lbl.text())
             if ok: 
-                self.lbl.setText(t_text)
-                self.widget_name = t_text
+                self.lbl.setText(text_val)
+                self.widget_name = text_val
             
         self.handle_base_actions(action, font_act, res_act, del_act)
 

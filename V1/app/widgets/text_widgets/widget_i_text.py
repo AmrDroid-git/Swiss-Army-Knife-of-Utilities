@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QLineEdit, QHBoxLayout, QMenu, QInputDialog
 from PySide6.QtCore import Qt
 from app.widgets.base_widget import BaseComponent
+from app.translator import t
 
 class WidgetIText(BaseComponent):
     """
@@ -16,32 +17,32 @@ class WidgetIText(BaseComponent):
         self.layout.setContentsMargins(0, 0, 0, 0)
         
         self.entry = QLineEdit()
-        self.entry.setPlaceholderText("INPUT TEXT")
+        self.entry.setPlaceholderText(t("input_text"))
         self.layout.addWidget(self.entry)
 
     def contextMenuEvent(self, event):
         """ Allows setting default values and importantly, the Argument Order. """
         if not self.is_edit_mode:
             menu = QMenu(self)
-            clear_act = menu.addAction("Clear Content")
+            clear_act = menu.addAction(t("clear_content"))
             if menu.exec(event.globalPos()) == clear_act:
                 self.set_value("")
             return
             
         menu = QMenu(self)
         
-        edit_act = menu.addAction("Edit Default Value")
+        edit_act = menu.addAction(t("edit_default_value"))
         # Determines what position this argument will hold when sending to Python index
-        order_act = menu.addAction(f"Set Arg Order ({self.arg_order})")
+        order_act = menu.addAction(t("set_arg_order").format(order=self.arg_order))
         font_act, res_act, del_act = self.add_base_actions(menu)
         
         action = menu.exec(event.globalPos())
         
         if action == edit_act:
-            t, ok = QInputDialog.getText(self, "Edit", "Default Value:", text=self.entry.text())
-            if ok: self.entry.setText(t)
+            text_val, ok = QInputDialog.getText(self, t("edit_dialog_title"), t("edit_dialog_prompt"), text=self.entry.text())
+            if ok: self.entry.setText(text_val)
         elif action == order_act:
-            val, ok = QInputDialog.getInt(self, "Order", "Arg Index:", self.arg_order, 0, 100)
+            val, ok = QInputDialog.getInt(self, t("order_dialog_title"), t("order_dialog_prompt"), self.arg_order, 0, 100)
             if ok: self.arg_order = val
             
         self.handle_base_actions(action, font_act, res_act, del_act)

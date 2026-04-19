@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QLabel, QHBoxLayout, QMenu, QInputDialog
 from PySide6.QtCore import Qt
 from app.widgets.base_widget import BaseComponent
+from app.translator import t
 
 class WidgetLabel(BaseComponent):
     """
@@ -20,14 +21,14 @@ class WidgetLabel(BaseComponent):
         if not self.is_edit_mode: return
         menu = QMenu(self)
         
-        edit_act = menu.addAction("Edit Text")
+        edit_act = menu.addAction(t("edit_text"))
         font_act, res_act, del_act = self.add_base_actions(menu)
         
         action = menu.exec(event.globalPos())
         
         if action == edit_act:
-            t, ok = QInputDialog.getText(self, "Edit", "Text:", text=self.lbl.text())
-            if ok: self.lbl.setText(t)
+            text_val, ok = QInputDialog.getText(self, t("edit_dialog_title"), t("rename_dialog_prompt"), text=self.lbl.text())
+            if ok: self.lbl.setText(text_val)
             
         self.handle_base_actions(action, font_act, res_act, del_act)
 

@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QPlainTextEdit, QLineEdit, QVBoxLayout, QMenu
 from PySide6.QtCore import Qt, Signal
 from app.widgets.base_widget import BaseComponent
+from app.translator import t
 
 class WidgetInteractiveConsole(BaseComponent):
     """
@@ -26,7 +27,7 @@ class WidgetInteractiveConsole(BaseComponent):
         
         # User Input Bar (STDIN)
         self.console_input = QLineEdit()
-        self.console_input.setPlaceholderText("Type input here and press Enter...")
+        self.console_input.setPlaceholderText(t("console_input_placeholder"))
         self.console_input.setStyleSheet("background-color: #2d2d2d; color: white; border: 1px solid #555; padding: 5px;")
         
         # When user presses Enter, broadcast the text
@@ -36,7 +37,7 @@ class WidgetInteractiveConsole(BaseComponent):
     def contextMenuEvent(self, event):
         if not self.is_edit_mode:
             menu = QMenu(self)
-            clear_act = menu.addAction("Clear Console Output")
+            clear_act = menu.addAction(t("clear_console"))
             if menu.exec(event.globalPos()) == clear_act:
                 self.clear_text()
             return

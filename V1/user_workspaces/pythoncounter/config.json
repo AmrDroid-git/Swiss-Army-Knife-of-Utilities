@@ -1,0 +1,35 @@
+[
+    {
+        "comp_type": "widget_button",
+        "x": 356,
+        "y": 227,
+        "width": 130,
+        "height": 50,
+        "arg_order": 0,
+        "properties": {},
+        "label": "Run Script",
+        "script_path": "user_workspaces\\pythoncounter\\scripts\\Run_Script\\main.py",
+        "script_type": "python",
+        "is_compiled": false,
+        "script_folder_name": "Run_Script"
+    },
+    {
+        "comp_type": "widget_i_text",
+        "x": 266,
+        "y": 113,
+        "width": 316,
+        "height": 54,
+        "arg_order": 0,
+        "properties": {},
+        "value": "2"
+    },
+    {
+        "comp_type": "widget_console",
+        "x": 189,
+        "y": 350,
+        "width": 459,
+        "height": 236,
+        "arg_order": 0,
+        "properties": {}
+    }
+]

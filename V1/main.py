@@ -6,6 +6,10 @@ from PySide6.QtGui import QFontDatabase
 from app.ui.dashboard import Dashboard
 
 def main():
+    # Suppress Windows font warnings
+    os.environ['QT_QPA_FONTDIR'] = ''
+    os.environ['QT_LOGGING_RULES'] = 'qt.qpa.fonts=false'
+    
     app = QApplication(sys.argv)
     
     # Register purely downloaded GUI fonts natively into the system

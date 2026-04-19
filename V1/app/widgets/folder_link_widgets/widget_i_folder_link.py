@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QMenu, QFileDialog, QInputDialog
 from PySide6.QtCore import Qt
 from app.widgets.base_widget import BaseComponent
+from app.translator import t
 
 class WidgetIFolderLink(BaseComponent):
     """
@@ -17,10 +18,10 @@ class WidgetIFolderLink(BaseComponent):
         self.layout.setContentsMargins(0, 0, 0, 0)
         
         self.entry = QLineEdit()
-        self.entry.setPlaceholderText("INPUT FOLDER")
+        self.entry.setPlaceholderText(t("input_folder"))
         self.layout.addWidget(self.entry)
         
-        self.browse_btn = QPushButton("...")
+        self.browse_btn = QPushButton(t("browse_button"))
         self.browse_btn.setFixedWidth(30)
         self.browse_btn.clicked.connect(self.browse)
         self.layout.addWidget(self.browse_btn)
@@ -28,24 +29,24 @@ class WidgetIFolderLink(BaseComponent):
     def contextMenuEvent(self, event):
         if not self.is_edit_mode:
             menu = QMenu(self)
-            clear_act = menu.addAction("Clear Content")
+            clear_act = menu.addAction(t("clear_content"))
             if menu.exec(event.globalPos()) == clear_act:
                 self.set_value("")
             return
             
         menu = QMenu(self)
         
-        edit_act = menu.addAction("Edit Default Value")
-        order_act = menu.addAction(f"Set Arg Order ({self.arg_order})")
+        edit_act = menu.addAction(t("edit_default_value"))
+        order_act = menu.addAction(t("set_arg_order").format(order=self.arg_order))
         font_act, res_act, del_act = self.add_base_actions(menu)
         
         action = menu.exec(event.globalPos())
         
         if action == edit_act:
-            t, ok = QInputDialog.getText(self, "Edit", "Default Value:", text=self.entry.text())
-            if ok: self.entry.setText(t)
+            text_val, ok = QInputDialog.getText(self, t("edit_dialog_title"), t("edit_dialog_prompt"), text=self.entry.text())
+            if ok: self.entry.setText(text_val)
         elif action == order_act:
-            val, ok = QInputDialog.getInt(self, "Order", "Arg Index:", self.arg_order, 0, 100)
+            val, ok = QInputDialog.getInt(self, t("order_dialog_title"), t("order_dialog_prompt"), self.arg_order, 0, 100)
             if ok: self.arg_order = val
             
         self.handle_base_actions(action, font_act, res_act, del_act)
@@ -57,7 +58,7 @@ class WidgetIFolderLink(BaseComponent):
         """ Prompts use for a Directory target. """
         if self.is_edit_mode: return
         
-        path = QFileDialog.getExistingDirectory(self, "Select Input Folder")
+        path = QFileDialog.getExistingDirectory(self, t("select_input_folder_dialog"))
         if path: self.entry.setText(path)
 
     def get_value(self): 

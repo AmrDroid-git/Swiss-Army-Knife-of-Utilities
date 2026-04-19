@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QMenu, QFileDialog
 from PySide6.QtCore import Qt
 from app.widgets.base_widget import BaseComponent
+from app.translator import t
 
 class WidgetOFileLink(BaseComponent):
     """
@@ -19,11 +20,11 @@ class WidgetOFileLink(BaseComponent):
         self.layout.setContentsMargins(0, 0, 0, 0)
         
         self.entry = QLineEdit()
-        self.entry.setPlaceholderText("OUTPUT DIRECTORY")
+        self.entry.setPlaceholderText(t("output_directory"))
         self.entry.setReadOnly(True)
         self.layout.addWidget(self.entry)
         
-        self.browse_btn = QPushButton("...")
+        self.browse_btn = QPushButton(t("browse_button"))
         self.browse_btn.setFixedWidth(30)
         self.browse_btn.clicked.connect(self.browse)
         self.layout.addWidget(self.browse_btn)
@@ -31,7 +32,7 @@ class WidgetOFileLink(BaseComponent):
     def contextMenuEvent(self, event):
         if not self.is_edit_mode:
             menu = QMenu(self)
-            clear_act = menu.addAction("Clear Content")
+            clear_act = menu.addAction(t("clear_content"))
             if menu.exec(event.globalPos()) == clear_act:
                 self.set_value("")
             return
@@ -48,7 +49,7 @@ class WidgetOFileLink(BaseComponent):
         """ Output needs a DIRECTORY, not a single file selection. """
         if self.is_edit_mode: return
         
-        path = QFileDialog.getExistingDirectory(self, "Select Output Folder")
+        path = QFileDialog.getExistingDirectory(self, t("select_output_folder_dialog"))
         if path: self.entry.setText(path)
 
     def get_value(self): 

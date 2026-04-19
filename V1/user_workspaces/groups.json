@@ -2,9 +2,8 @@
     "groups": [
         {
             "name": "Ungrouped",
-            "expanded": true,
+            "expanded": false,
             "windows": [
-                "Ccounter",
                 "counter",
                 "cppcounter",
                 "folderSize",
@@ -18,6 +17,14 @@
                 "dfgd",
                 "addition",
                 "compilation_error"
+            ]
+        },
+        {
+            "name": "coutner",
+            "expanded": false,
+            "windows": [
+                "pythoncounter",
+                "Ccounter"
             ]
         }
     ]

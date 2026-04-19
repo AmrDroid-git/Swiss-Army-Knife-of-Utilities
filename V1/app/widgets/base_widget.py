@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QInputDialog
 from PySide6.QtCore import Qt, QPoint
+from app.translator import t
 
 class BaseComponent(QWidget):
     """
@@ -45,9 +46,11 @@ class BaseComponent(QWidget):
         self.is_edit_mode = enabled
         self.setMouseTracking(enabled) # Magic: Unlocks cursor tracking when no button is physically held
         
-        # Reset cursor when exiting edit mode
+        # Reset cursor and drag/resize state when exiting edit mode
         if not enabled:
             self.setCursor(Qt.ArrowCursor)
+            self._drag_pos = None
+            self._resize_dir = None
         
         # Provide Word/PPT style visual bounding box outlines during Edit Mode
         if enabled:
@@ -199,9 +202,9 @@ class BaseComponent(QWidget):
     def add_base_actions(self, menu):
         """ Appends standard actions (Resize, Delete, Font) to any widget's custom right-click menu. """
         menu.addSeparator()
-        font_act = menu.addAction("Change Font")
-        resize_act = menu.addAction("Resize")
-        delete_act = menu.addAction("Delete")
+        font_act = menu.addAction(t("change_font"))
+        resize_act = menu.addAction(t("resize"))
+        delete_act = menu.addAction(t("delete"))
         return font_act, resize_act, delete_act
 
     def handle_base_actions(self, action, font_act, res_act, del_act):
@@ -222,8 +225,8 @@ class BaseComponent(QWidget):
                 self.apply_font(font)
                 
         elif action == res_act:
-            w, ok1 = QInputDialog.getInt(self, "Width", "Width:", self.width())
-            h, ok2 = QInputDialog.getInt(self, "Height", "Height:", self.height())
+            w, ok1 = QInputDialog.getInt(self, t("width_dialog_title"), t("width_dialog_prompt"), self.width())
+            h, ok2 = QInputDialog.getInt(self, t("height_dialog_title"), t("height_dialog_prompt"), self.height())
             if ok1 and ok2: 
                 self.resize(w, h)
                 self.update_relative_geometry()

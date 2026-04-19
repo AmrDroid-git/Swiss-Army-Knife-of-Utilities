@@ -1,33 +1,33 @@
 [
     {
         "comp_type": "widget_button",
-        "x": 446,
+        "x": 196,
         "y": 120,
-        "width": 160,
-        "height": 46,
+        "width": 147,
+        "height": 93,
         "arg_order": 0,
         "properties": {},
         "label": "Run Script",
-        "script_path": "",
+        "script_path": "user_workspaces\\Ccounter\\scripts\\Run_Script\\Main.c",
         "script_type": "c",
         "is_compiled": true,
-        "script_folder_name": ""
+        "script_folder_name": "Run_Script"
     },
     {
         "comp_type": "widget_console",
-        "x": 241,
-        "y": 264,
-        "width": 524,
-        "height": 214,
+        "x": 117,
+        "y": 267,
+        "width": 413,
+        "height": 300,
         "arg_order": 0,
         "properties": {}
     },
     {
         "comp_type": "widget_i_text",
-        "x": 407,
-        "y": 59,
-        "width": 271,
-        "height": 44,
+        "x": 187,
+        "y": 46,
+        "width": 118,
+        "height": 30,
         "arg_order": 0,
         "properties": {},
         "value": "2"

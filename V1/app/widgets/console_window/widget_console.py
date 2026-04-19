@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QPlainTextEdit, QHBoxLayout, QMenu
 from PySide6.QtCore import Qt
 from app.widgets.base_widget import BaseComponent
+from app.translator import t
 
 class WidgetConsole(BaseComponent):
     """
@@ -23,7 +24,7 @@ class WidgetConsole(BaseComponent):
         """ Adds standard deletion/resize functionality if right-clicked. """
         if not self.is_edit_mode:
             menu = QMenu(self)
-            clear_act = menu.addAction("Clear Console Output")
+            clear_act = menu.addAction(t("clear_console"))
             if menu.exec(event.globalPos()) == clear_act:
                 self.clear_text()
             return
