@@ -2,9 +2,8 @@
     "groups": [
         {
             "name": "Ungrouped",
-            "expanded": false,
+            "expanded": true,
             "windows": [
-                "addition",
                 "Ccounter",
                 "counter",
                 "cppcounter",
@@ -15,7 +14,10 @@
                 "requirementstest",
                 "split",
                 "www",
-                "add"
+                "add",
+                "dfgd",
+                "addition",
+                "compilation_error"
             ]
         }
     ]

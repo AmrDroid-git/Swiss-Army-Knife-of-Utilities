@@ -1,59 +1,59 @@
 [
     {
         "comp_type": "widget_button",
-        "x": 161,
-        "y": 107,
-        "width": 314,
-        "height": 53,
+        "x": 38,
+        "y": 179,
+        "width": 99,
+        "height": 52,
         "arg_order": 0,
-        "properties": {
-            "custom_font": "Segoe UI,22,-1,5,700,0,0,0,0,0,0,0,0,0,0,1,Bold"
-        },
-        "label": "Run Script",
-        "script_path": "user_workspaces\\addition\\scripts\\Run_Script\\main.py",
-        "script_type": "",
-        "is_compiled": false
+        "properties": {},
+        "label": "Additionneeeee",
+        "script_path": "user_workspaces\\addition\\scripts\\Additionneeeee\\main.py",
+        "script_type": "python",
+        "is_compiled": false,
+        "script_folder_name": "Additionneeeee"
     },
     {
         "comp_type": "widget_i_text",
-        "x": 115,
-        "y": 29,
-        "width": 150,
-        "height": 45,
+        "x": 44,
+        "y": 86,
+        "width": 87,
+        "height": 57,
         "arg_order": 0,
-        "properties": {
-            "custom_font": "Segoe UI,28,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
-        },
-        "value": "66"
+        "properties": {},
+        "value": "2"
     },
     {
         "comp_type": "widget_i_text",
-        "x": 390,
-        "y": 27,
-        "width": 121,
-        "height": 37,
-        "arg_order": 1,
-        "properties": {
-            "custom_font": "Tempus Sans ITC,16,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
-        },
-        "value": "5"
+        "x": 213,
+        "y": 86,
+        "width": 140,
+        "height": 51,
+        "arg_order": 0,
+        "properties": {},
+        "value": "3"
     },
     {
-        "comp_type": "widget_o_text",
-        "x": 223,
-        "y": 178,
-        "width": 145,
-        "height": 47,
+        "comp_type": "widget_console",
+        "x": 57,
+        "y": 279,
+        "width": 305,
+        "height": 211,
         "arg_order": 0,
         "properties": {}
     },
     {
-        "comp_type": "widget_interactive_console",
-        "x": 95,
-        "y": 249,
-        "width": 436,
-        "height": 158,
+        "comp_type": "widget_button",
+        "x": 247,
+        "y": 173,
+        "width": 99,
+        "height": 50,
         "arg_order": 0,
-        "properties": {}
+        "properties": {},
+        "label": "substract",
+        "script_path": "user_workspaces\\addition\\scripts\\substract\\main.py",
+        "script_type": "python",
+        "is_compiled": false,
+        "script_folder_name": "substract"
     }
 ]

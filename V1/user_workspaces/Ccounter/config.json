@@ -8,9 +8,10 @@
         "arg_order": 0,
         "properties": {},
         "label": "Run Script",
-        "script_path": "user_workspaces\\Ccounter\\scripts\\Run_Script\\Main.c",
+        "script_path": "",
         "script_type": "c",
-        "is_compiled": true
+        "is_compiled": true,
+        "script_folder_name": ""
     },
     {
         "comp_type": "widget_console",

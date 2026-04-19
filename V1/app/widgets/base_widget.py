@@ -45,6 +45,10 @@ class BaseComponent(QWidget):
         self.is_edit_mode = enabled
         self.setMouseTracking(enabled) # Magic: Unlocks cursor tracking when no button is physically held
         
+        # Reset cursor when exiting edit mode
+        if not enabled:
+            self.setCursor(Qt.ArrowCursor)
+        
         # Provide Word/PPT style visual bounding box outlines during Edit Mode
         if enabled:
             self.setAttribute(Qt.WA_StyledBackground, True)

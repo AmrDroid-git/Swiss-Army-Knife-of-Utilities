@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QLabel, QHBoxLayout, QMenu, QFileDialog, QInputDia
 from PySide6.QtCore import Qt, QPoint, QThread, Signal
 from PySide6.QtGui import QFont
 from app.widgets.base_widget import BaseComponent
+from app.translator import t
 
 class CommandExecutor(QThread):
     """Worker thread to execute shell commands with output streaming."""
@@ -55,7 +56,7 @@ class InteractiveTerminal(QTextEdit):
             border: none;
         """)
         
-        self.setPlaceholderText("Type commands and press Enter to execute. Example: pip install numpy")
+        self.setPlaceholderText(t("terminal_title"))
         self.command_executor = None
         self.output_buffer = ""
         self.prompt_pos = 0  # Track where the prompt starts
@@ -160,7 +161,7 @@ class WidgetRequirementsLink(BaseComponent):
         if not self.is_edit_mode: return
         menu = QMenu(self)
         
-        link_act = menu.addAction("📄 Link Markdown File")
+        link_act = menu.addAction(t("link_markdown"))
         rename_act = menu.addAction("Rename Label")
         
         # Append the standard parent actions (Resize, Delete)
@@ -171,10 +172,10 @@ class WidgetRequirementsLink(BaseComponent):
         if action == link_act:
             self.link_markdown_file()
         elif action == rename_act:
-            t, ok = QInputDialog.getText(self, "Rename", "Label Text:", text=self.lbl.text())
+            t_text, ok = QInputDialog.getText(self, "Rename", "Label Text:", text=self.lbl.text())
             if ok: 
-                self.lbl.setText(t)
-                self.widget_name = t
+                self.lbl.setText(t_text)
+                self.widget_name = t_text
             
         self.handle_base_actions(action, font_act, res_act, del_act)
 
@@ -186,7 +187,7 @@ class WidgetRequirementsLink(BaseComponent):
         Allows the user to select a markdown (.md) file that contains requirements documentation.
         Saves it to the workspace for persistence.
         """
-        md_file = QFileDialog.getOpenFileName(self, "Select Markdown File", "", "Markdown Files (*.md);;All Files (*)")
+        md_file = QFileDialog.getOpenFileName(self, t("markdown_file"), "", "Markdown Files (*.md);;All Files (*)")
         if md_file and md_file[0]:
             self.md_file_path = md_file[0]
             
@@ -200,9 +201,9 @@ class WidgetRequirementsLink(BaseComponent):
             
             try:
                 shutil.copy2(md_file[0], self.workspace_md_path)
-                QMessageBox.information(self, "Success", f"Linked to:\n{md_filename}\n\nSaved to workspace for persistence.")
+                QMessageBox.information(self, "Success", f"{t('linked_to')}:\n{md_filename}\n\n{t('saved_persistence')}")
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Could not save markdown file: {e}")
+                QMessageBox.critical(self, t("error"), f"{t('could_not_save')}: {e}")
 
     def mousePressEvent(self, event):
         """
@@ -252,7 +253,7 @@ class WidgetRequirementsLink(BaseComponent):
         md_path = self.workspace_md_path if self.workspace_md_path and os.path.exists(self.workspace_md_path) else self.md_file_path
         
         if not md_path or not os.path.exists(md_path):
-            QMessageBox.warning(self, "Error", "No requirements file linked or file not found.")
+            QMessageBox.warning(self, t("error"), t("no_requirements"))
             return
         
         # Read markdown content
@@ -260,7 +261,7 @@ class WidgetRequirementsLink(BaseComponent):
             with open(md_path, 'r', encoding='utf-8') as f:
                 content = f.read()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Could not read file: {e}")
+            QMessageBox.critical(self, t("error"), f"{t('could_not_read')}: {e}")
             return
         
         # Create professional requirements dialog
@@ -325,11 +326,11 @@ class WidgetRequirementsLink(BaseComponent):
         # Button layout
         btn_layout = QHBoxLayout()
         
-        btn_clear = QPushButton("🧹 Clear Terminal")
+        btn_clear = QPushButton(t("clear_terminal"))
         btn_clear.clicked.connect(terminal.clear_terminal)
         btn_layout.addWidget(btn_clear)
         
-        btn_copy = QPushButton("📋 Copy Terminal Text")
+        btn_copy = QPushButton(t("copy_terminal"))
         btn_copy.clicked.connect(lambda: self.copy_to_clipboard(terminal.get_all_output()))
         btn_layout.addWidget(btn_copy)
         
@@ -347,7 +348,7 @@ class WidgetRequirementsLink(BaseComponent):
         from PySide6.QtWidgets import QApplication
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
-        QMessageBox.information(self, "Copied", "Terminal text copied to clipboard!")
+        QMessageBox.information(self, t("copied"), t("terminal_text_copied"))
 
     def to_dict(self):
         """ Appends requirements link specific attributes to the BaseComponent JSON format. """

@@ -10,6 +10,7 @@ from app.widgets import (
 from app.ui.edit_palette import ToolboxItem
 from app.core import package_manager
 from app.core.script_engine import ScriptEngine
+from app.translator import t
 
 class EditorCanvas(QFrame):
     def __init__(self, script_engine):
@@ -129,7 +130,7 @@ class CustomWindow(QWidget):
         
         # Navbar / Header Interface
         nav = QHBoxLayout()
-        self.edit_btn = QPushButton("✎ Design Mode")
+        self.edit_btn = QPushButton(t("design_mode"))
         self.edit_btn.setCheckable(True)
         self.edit_btn.setStyleSheet("""
             QPushButton:checked { background-color: #e74c3c; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; }
@@ -137,7 +138,7 @@ class CustomWindow(QWidget):
         """)
         self.edit_btn.clicked.connect(self.toggle)
         
-        save_btn = QPushButton("💾 SAVE PROJECT")
+        save_btn = QPushButton(t("save_project"))
         save_btn.setStyleSheet("background-color: #27ae60; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold;")
         save_btn.clicked.connect(lambda: package_manager.save_window(self.window_id, self.canvas))
         
@@ -170,16 +171,16 @@ class CustomWindow(QWidget):
         s_lay.setSpacing(4)
         s_lay.setContentsMargins(4, 4, 4, 4)
         
-        s_lay.addWidget(ToolboxItem("🎯 Script Trigger", "widget_button"))
-        s_lay.addWidget(ToolboxItem("🏷️ Title/Label", "widget_label"))
-        s_lay.addWidget(ToolboxItem("📝 Text Input", "widget_i_text"))
-        s_lay.addWidget(ToolboxItem("📟 Text Output", "widget_o_text"))
-        s_lay.addWidget(ToolboxItem("📄 File Input", "widget_i_file_link"))
-        s_lay.addWidget(ToolboxItem("📂 Folder Input", "widget_i_folder_link"))
-        s_lay.addWidget(ToolboxItem("📦 Safe Output Target", "widget_o_folder_link"))
-        s_lay.addWidget(ToolboxItem("🖥️ System Console", "widget_console"))
-        s_lay.addWidget(ToolboxItem("⌨️ Interactive Console", "widget_interactive_console"))
-        s_lay.addWidget(ToolboxItem("ⓘ Requirements Link", "widget_requirements_link"))
+        s_lay.addWidget(ToolboxItem(t("script_trigger"), "widget_button"))
+        s_lay.addWidget(ToolboxItem(t("title_label"), "widget_label"))
+        s_lay.addWidget(ToolboxItem(t("text_input"), "widget_i_text"))
+        s_lay.addWidget(ToolboxItem(t("text_output"), "widget_o_text"))
+        s_lay.addWidget(ToolboxItem(t("file_input"), "widget_i_file_link"))
+        s_lay.addWidget(ToolboxItem(t("folder_input"), "widget_i_folder_link"))
+        s_lay.addWidget(ToolboxItem(t("safe_output"), "widget_o_folder_link"))
+        s_lay.addWidget(ToolboxItem(t("system_console"), "widget_console"))
+        s_lay.addWidget(ToolboxItem(t("interactive_console"), "widget_interactive_console"))
+        s_lay.addWidget(ToolboxItem(t("requirements_link"), "widget_requirements_link"))
         s_lay.addStretch()
         
         self.content.addWidget(self.canvas)

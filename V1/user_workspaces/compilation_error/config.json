@@ -1,0 +1,30 @@
+[
+    {
+        "comp_type": "widget_button",
+        "x": 271,
+        "y": 248,
+        "width": 130,
+        "height": 50,
+        "arg_order": 0,
+        "properties": {},
+        "label": "Run Script",
+        "script_path": "user_workspaces\\compilation_error\\scripts\\Run_Script\\Main.java",
+        "script_type": "java",
+        "is_compiled": false,
+        "script_folder_name": "Run_Script"
+    },
+    {
+        "comp_type": "widget_button",
+        "x": 518,
+        "y": 252,
+        "width": 130,
+        "height": 50,
+        "arg_order": 0,
+        "properties": {},
+        "label": "Run Script",
+        "script_path": "user_workspaces\\compilation_error\\scripts\\Run_Script\\Main.cpp",
+        "script_type": "cpp",
+        "is_compiled": false,
+        "script_folder_name": "Run_Script"
+    }
+]

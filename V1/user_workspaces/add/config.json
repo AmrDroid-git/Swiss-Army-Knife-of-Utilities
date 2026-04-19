@@ -1,15 +1,18 @@
 [
     {
         "comp_type": "widget_button",
-        "x": 381,
-        "y": 231,
-        "width": 352,
-        "height": 110,
+        "x": 304,
+        "y": 120,
+        "width": 281,
+        "height": 57,
         "arg_order": 0,
         "properties": {
             "custom_font": "Segoe UI,36,-1,5,600,0,0,0,0,0,0,0,0,0,0,1,Semibold"
         },
         "label": "Run Script",
-        "script_path": ""
+        "script_path": "",
+        "script_type": "",
+        "is_compiled": false,
+        "script_folder_name": ""
     }
 ]
