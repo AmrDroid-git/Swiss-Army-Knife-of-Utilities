@@ -1,5 +1,6 @@
 import os
-from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QMessageBox
+from PySide6.QtWidgets import (QFrame, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QMessageBox,
+                               QScrollArea)
 from PySide6.QtCore import Qt, QPoint
 from app.widgets import (
     BaseComponent, WidgetButton, WidgetIText, WidgetOText,
@@ -150,9 +151,25 @@ class CustomWindow(QWidget):
         self.content = QHBoxLayout()
         self.canvas = EditorCanvas(self.engine)
         
+        # Create scrollable sidebar for edit palette
+        self.sidebar_container = QScrollArea()
+        self.sidebar_container.setWidgetResizable(True)
+        self.sidebar_container.setMinimumWidth(200)
+        self.sidebar_container.setMaximumWidth(250)
+        self.sidebar_container.setStyleSheet("""
+            QScrollArea {
+                border: 1px solid #bdc3c7;
+                background-color: #f0f0f0;
+            }
+        """)
+        
         self.sidebar = QWidget()
-        self.sidebar.setFixedWidth(200)
+        self.sidebar_container.setWidget(self.sidebar)
+        
         s_lay = QVBoxLayout(self.sidebar)
+        s_lay.setSpacing(4)
+        s_lay.setContentsMargins(4, 4, 4, 4)
+        
         s_lay.addWidget(ToolboxItem("🎯 Script Trigger", "widget_button"))
         s_lay.addWidget(ToolboxItem("🏷️ Title/Label", "widget_label"))
         s_lay.addWidget(ToolboxItem("📝 Text Input", "widget_i_text"))
@@ -166,11 +183,11 @@ class CustomWindow(QWidget):
         s_lay.addStretch()
         
         self.content.addWidget(self.canvas)
-        self.content.addWidget(self.sidebar)
+        self.content.addWidget(self.sidebar_container)
         self.layout.addLayout(self.content)
         
         # Hide toolbar by default to enforce "Run Mode" execution experience
-        self.sidebar.hide()
+        self.sidebar_container.hide()
         
         # Hydrate canvas from saved config json automatically
         package_manager.load_window(self.window_id, self.canvas)
@@ -192,7 +209,7 @@ class CustomWindow(QWidget):
     def toggle(self):
         state = self.edit_btn.isChecked()
         self.canvas.set_edit_mode(state)
-        self.sidebar.setVisible(state)
+        self.sidebar_container.setVisible(state)
 
     def closeEvent(self, event):
         package_manager.save_window(self.window_id, self.canvas)

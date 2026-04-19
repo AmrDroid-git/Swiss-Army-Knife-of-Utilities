@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Qt, QMimeData, QByteArray, QDataStream, QIODevice
-from PySide6.QtGui import QDrag
+from PySide6.QtCore import Qt, QMimeData, QByteArray, QDataStream, QIODevice, QPoint
+from PySide6.QtGui import QDrag, QPixmap
+from PySide6.QtCore import QSize
 
 class ToolboxItem(QLabel):
     """
@@ -21,6 +22,7 @@ class ToolboxItem(QLabel):
             font-weight: bold;
         """)
         self.setAlignment(Qt.AlignCenter)
+        self.setMinimumHeight(50)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -30,4 +32,11 @@ class ToolboxItem(QLabel):
             # Pack exactly what widget we intend to create inside the drop stream
             mime.setData("application/x-widget-template", self.type_id.encode('utf-8'))
             drag.setMimeData(mime)
+            
+            # Create a visual pixmap of this button to show while dragging
+            pixmap = QPixmap(self.size())
+            self.render(pixmap)
+            drag.setPixmap(pixmap)
+            drag.setHotSpot(QPoint(pixmap.width() // 2, pixmap.height() // 2))
+            
             drag.exec(Qt.CopyAction)
