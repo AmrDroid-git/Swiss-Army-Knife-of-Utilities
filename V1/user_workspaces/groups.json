@@ -2,31 +2,13 @@
     "groups": [
         {
             "name": "Ungrouped",
-            "expanded": true,
-            "windows": [
-                "counter",
-                "cppcounter",
-                "folderSize",
-                "interact",
-                "javaadd",
-                "javacounter",
-                "requirementstest",
-                "split",
-                "www",
-                "add",
-                "dfgd",
-                "addition",
-                "compilation_error",
-                "additionJava"
-            ]
+            "expanded": false,
+            "windows": []
         },
         {
-            "name": "coutner",
+            "name": "DOWNLOADERS",
             "expanded": false,
-            "windows": [
-                "pythoncounter",
-                "Ccounter"
-            ]
+            "windows": []
         }
     ]
 }

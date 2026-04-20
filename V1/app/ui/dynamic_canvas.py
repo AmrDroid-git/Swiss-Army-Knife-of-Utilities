@@ -1,7 +1,10 @@
 import os
-from PySide6.QtWidgets import (QFrame, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QMessageBox,
-                               QScrollArea, QApplication)
-from PySide6.QtCore import Qt, QPoint
+import json
+from PySide6.QtWidgets import (
+    QFrame, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
+    QScrollArea, QApplication
+)
+from PySide6.QtCore import Qt, QTimer
 from app.widgets import (
     BaseComponent, WidgetButton, WidgetIText, WidgetOText,
     WidgetIFileLink, WidgetOFileLink, WidgetIFolderLink, WidgetOFolderLink,
@@ -13,172 +16,215 @@ from app.core import package_manager
 from app.core.script_engine import ScriptEngine
 from app.translator import t
 
+
 class EditorCanvas(QFrame):
     def __init__(self, script_engine):
         super().__init__()
         self.setAcceptDrops(True)
-        # Add basic grid line appearance for editing
-        # Let the theme stylesheet handle the canvas background
         self.setStyleSheet("EditorCanvas { border: 2px dashed #9ca3af; border-radius: 8px; }")
         self.is_edit_mode = False
         self.script_engine = script_engine
-        
+        self._loading_in_progress = False
+
+    def set_loading_state(self, state: bool):
+        self._loading_in_progress = state
+
+    def _refresh_relative_geometry_for_all_widgets(self):
+        for c in self.findChildren(BaseComponent):
+            if hasattr(c, "update_relative_geometry"):
+                try:
+                    c.update_relative_geometry()
+                except Exception:
+                    pass
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        
+
+        if self._loading_in_progress:
+            return
+
         cur_w = event.size().width()
         cur_h = event.size().height()
-        if cur_w == 0 or cur_h == 0: return
-        
-        # Iterates across all active components proportionally mirroring the main window space
+        if cur_w <= 0 or cur_h <= 0:
+            return
+
         for c in self.findChildren(BaseComponent):
-            if hasattr(c, '_rel_x') and c._rel_w > 0:
+            if (
+                hasattr(c, "_rel_x")
+                and hasattr(c, "_rel_y")
+                and hasattr(c, "_rel_w")
+                and hasattr(c, "_rel_h")
+                and c._rel_w > 0
+                and c._rel_h > 0
+            ):
                 new_x = int(c._rel_x * cur_w)
                 new_y = int(c._rel_y * cur_h)
                 new_w = int(c._rel_w * cur_w)
                 new_h = int(c._rel_h * cur_h)
-                
-                # Enforce minimum constraints so the UI never breaks into microscopic sizes
+
                 new_w = max(40, new_w)
                 new_h = max(20, new_h)
-                
+
                 c.setGeometry(new_x, new_y, new_w, new_h)
-        
+
     def set_edit_mode(self, state):
         self.is_edit_mode = state
+
         if state:
             self.setStyleSheet("EditorCanvas { border: 2px dashed #6366f1; border-radius: 8px; }")
         else:
-            # Reset canvas cursor when exiting edit mode
-            from PySide6.QtCore import Qt
             self.setCursor(Qt.ArrowCursor)
             self.setStyleSheet("EditorCanvas { border: 2px dashed #9ca3af; border-radius: 8px; }")
-            
-        for c in self.findChildren(BaseComponent): 
-            c.set_edit_mode(state)
+
+        for c in self.findChildren(BaseComponent):
+            try:
+                c.set_edit_mode(state)
+            except Exception:
+                pass
 
     def dragEnterEvent(self, event):
-        """ Allows dropping if the MIME format matches our proprietary builder standard """
-        if self.is_edit_mode and event.mimeData().hasFormat("application/x-widget-template"): 
+        if self.is_edit_mode and event.mimeData().hasFormat("application/x-widget-template"):
             event.acceptProposedAction()
 
     def contextMenuEvent(self, event):
-        """ Right clicking the empty canvas safely zeroes out all output and input fields """
         if not self.is_edit_mode:
             from PySide6.QtWidgets import QMenu
+
             menu = QMenu(self)
             clear_act = menu.addAction(t("clear_all_fields"))
+
             if menu.exec(event.globalPos()) == clear_act:
                 for c in self.findChildren(BaseComponent):
-                    if hasattr(c, 'clear_text'): c.clear_text()
-                    elif hasattr(c, 'set_value'): c.set_value("")
+                    if hasattr(c, "clear_text"):
+                        c.clear_text()
+                    elif hasattr(c, "set_value"):
+                        c.set_value("")
 
     def dropEvent(self, event):
-        if not self.is_edit_mode: return
+        if not self.is_edit_mode:
+            return
+
         pos = event.position().toPoint()
-        
-        # Read the widget type sent by base_widget ghost-clones OR ToolboxItem clones
         item_data = event.mimeData().data("application/x-widget-template")
-        tid = bytes(item_data).decode('utf-8')
-        
+        tid = bytes(item_data).decode("utf-8")
+
         obj = None
-        if tid == "widget_button": 
+
+        if tid == "widget_button":
             obj = WidgetButton(self, pos)
-            # Link the new button immediately to the central window script engine!
             obj.run_script_requested.connect(self.script_engine.run_script)
-        elif tid == "widget_label": obj = WidgetLabel(self, pos)
-        elif tid == "widget_i_text": obj = WidgetIText(self, pos)
-        elif tid == "widget_o_text": obj = WidgetOText(self, pos)
-        elif tid == "widget_select": obj = WidgetSelect(self, pos)
-        elif tid == "widget_i_file_link": obj = WidgetIFileLink(self, pos)
-        elif tid == "widget_o_file_link": obj = WidgetOFileLink(self, pos)
-        elif tid == "widget_i_folder_link": obj = WidgetIFolderLink(self, pos)
-        elif tid == "widget_o_folder_link": obj = WidgetOFolderLink(self, pos)
-        elif tid == "widget_console": 
+
+        elif tid == "widget_label":
+            obj = WidgetLabel(self, pos)
+
+        elif tid == "widget_i_text":
+            obj = WidgetIText(self, pos)
+
+        elif tid == "widget_o_text":
+            obj = WidgetOText(self, pos)
+
+        elif tid == "widget_select":
+            obj = WidgetSelect(self, pos)
+
+        elif tid == "widget_i_file_link":
+            obj = WidgetIFileLink(self, pos)
+
+        elif tid == "widget_o_file_link":
+            obj = WidgetOFileLink(self, pos)
+
+        elif tid == "widget_i_folder_link":
+            obj = WidgetIFolderLink(self, pos)
+
+        elif tid == "widget_o_folder_link":
+            obj = WidgetOFolderLink(self, pos)
+
+        elif tid == "widget_console":
             obj = WidgetConsole(self, pos)
             self.script_engine.stdout_emitted.connect(obj.append_text)
             self.script_engine.error_emitted.connect(obj.append_text)
-        elif tid == "widget_interactive_console": 
+
+        elif tid == "widget_interactive_console":
             obj = WidgetInteractiveConsole(self, pos)
             self.script_engine.stdout_emitted.connect(obj.append_text)
             self.script_engine.error_emitted.connect(obj.append_text)
             obj.stdin_submitted.connect(self.script_engine.send_input)
-        elif tid == "widget_requirements_link": 
+
+        elif tid == "widget_requirements_link":
             obj = WidgetRequirementsLink(self, pos)
 
         if obj:
             obj.is_template = False
             obj.set_edit_mode(True)
             obj.show()
-            
-            # Immediately record the floating-point scale matrix based exactly on where it was dropped
-            from PySide6.QtCore import QTimer
-            QTimer.singleShot(50, obj.update_relative_geometry)
+            QTimer.singleShot(0, lambda: self._safe_update_relative_geometry(obj))
             event.acceptProposedAction()
+
+    def _safe_update_relative_geometry(self, widget):
+        if widget is None:
+            return
+        if hasattr(widget, "update_relative_geometry"):
+            try:
+                widget.update_relative_geometry()
+            except Exception:
+                pass
 
 
 class CustomWindow(QWidget):
-    """ The primary wrapper containing the Canvas, Toolbar, and Script Engine for one specific Project. """
     def __init__(self, window_id):
         super().__init__()
         self.window_id = window_id
-        self.setWindowTitle(f"Project Workspace: {window_id.replace('_',' ')}")
-        
-        # Calculate 70% of screen size for the window
+        self.setWindowTitle(f"Project Workspace: {window_id.replace('_', ' ')}")
+
+        self._project_loaded_once = False
+        self._window_state_restored = False
+
         screen = QApplication.primaryScreen().geometry()
         window_width = int(screen.width() * 0.7)
         window_height = int(screen.height() * 0.7)
-        
-        # Resize window to 70% of screen
+
         self.resize(window_width, window_height)
-        
-        # Center window on screen
+
         center_x = (screen.width() - window_width) // 2
         center_y = (screen.height() - window_height) // 2
         self.move(center_x, center_y)
-        
-        # Theme comes from the application-level stylesheet applied in main.py — no override needed here.
-        
-        # Establishing Core Asynchronous Execution Engine
+
         self.engine = ScriptEngine()
-        
         self.layout = QVBoxLayout(self)
-        
-        # Navbar / Header Interface
+
         nav = QHBoxLayout()
+
         self.edit_btn = QPushButton(t("design_mode"))
         self.edit_btn.setCheckable(True)
         self.edit_btn.clicked.connect(self.toggle)
-        
+
         save_btn = QPushButton(t("save_project"))
-        save_btn.clicked.connect(lambda: package_manager.save_window(self.window_id, self.canvas))
-        
-        title_label = QLabel(window_id.replace('_', ' ').upper())
+        save_btn.clicked.connect(self.save_project)
+
+        title_label = QLabel(window_id.replace("_", " ").upper())
         title_label.setStyleSheet("font-size: 16px; font-weight: bold; padding: 4px 0px;")
+
         nav.addWidget(title_label)
         nav.addStretch()
         nav.addWidget(self.edit_btn)
         nav.addWidget(save_btn)
         self.layout.addLayout(nav)
 
-        # Content Layer (Canvas + Toolbar)
         self.content = QHBoxLayout()
+
         self.canvas = EditorCanvas(self.engine)
-        
-        # Create scrollable sidebar for edit palette
+
         self.sidebar_container = QScrollArea()
         self.sidebar_container.setWidgetResizable(True)
         self.sidebar_container.setMinimumWidth(200)
         self.sidebar_container.setMaximumWidth(250)
-        # Sidebar inherits theme from application stylesheet
-        
+
         self.sidebar = QWidget()
         self.sidebar_container.setWidget(self.sidebar)
-        
+
         s_lay = QVBoxLayout(self.sidebar)
         s_lay.setSpacing(4)
         s_lay.setContentsMargins(4, 4, 4, 4)
-        
+
         s_lay.addWidget(ToolboxItem(t("script_trigger"), "widget_button"))
         s_lay.addWidget(ToolboxItem(t("title_label"), "widget_label"))
         s_lay.addWidget(ToolboxItem(t("text_input"), "widget_i_text"))
@@ -191,38 +237,126 @@ class CustomWindow(QWidget):
         s_lay.addWidget(ToolboxItem(t("interactive_console"), "widget_interactive_console"))
         s_lay.addWidget(ToolboxItem(t("requirements_link"), "widget_requirements_link"))
         s_lay.addStretch()
-        
+
         self.content.addWidget(self.canvas)
         self.content.addWidget(self.sidebar_container)
         self.layout.addLayout(self.content)
-        
-        # Hide toolbar by default to enforce "Run Mode" execution experience
+
         self.sidebar_container.hide()
-        
-        # Hydrate canvas from saved config json automatically
-        package_manager.load_window(self.window_id, self.canvas)
-        self._reconnect_loaded_widgets()
+
+        self._restore_window_state()
+
+    def _get_window_state_file(self):
+        base_dir = os.path.join(package_manager.BASE_PROJECT_DIR, self.window_id)
+        os.makedirs(base_dir, exist_ok=True)
+        return os.path.join(base_dir, "window_state.json")
+
+    def _save_window_state(self):
+        try:
+            state_data = {
+                "x": self.x(),
+                "y": self.y(),
+                "width": self.width(),
+                "height": self.height(),
+                "maximized": self.isMaximized(),
+                "fullscreen": self.isFullScreen()
+            }
+
+            with open(self._get_window_state_file(), "w", encoding="utf-8") as f:
+                json.dump(state_data, f, indent=4)
+        except Exception as e:
+            print(f"Error saving window state: {e}")
+
+    def _restore_window_state(self):
+        try:
+            state_file = self._get_window_state_file()
+            if not os.path.exists(state_file):
+                return
+
+            with open(state_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            x = data.get("x")
+            y = data.get("y")
+            w = data.get("width")
+            h = data.get("height")
+
+            if isinstance(w, int) and isinstance(h, int) and w > 100 and h > 100:
+                self.resize(w, h)
+
+            if isinstance(x, int) and isinstance(y, int):
+                self.move(x, y)
+
+            self._saved_maximized = bool(data.get("maximized", False))
+            self._saved_fullscreen = bool(data.get("fullscreen", False))
+            self._window_state_restored = True
+
+        except Exception as e:
+            print(f"Error restoring window state: {e}")
+
+    def showEvent(self, event):
+        super().showEvent(event)
+
+        if self._window_state_restored:
+            if getattr(self, "_saved_fullscreen", False):
+                self.showFullScreen()
+            elif getattr(self, "_saved_maximized", False):
+                self.showMaximized()
+
+            self._window_state_restored = False
+
+        if not self._project_loaded_once:
+            self._project_loaded_once = True
+            QTimer.singleShot(0, self._load_project_after_show)
+
+    def _load_project_after_show(self):
+        self.canvas.set_loading_state(True)
+
+        try:
+            package_manager.load_window(self.window_id, self.canvas)
+            self._reconnect_loaded_widgets()
+            self.canvas._refresh_relative_geometry_for_all_widgets()
+
+        finally:
+            self.canvas.set_loading_state(False)
+            QTimer.singleShot(0, self.canvas._refresh_relative_geometry_for_all_widgets)
 
     def _reconnect_loaded_widgets(self):
-        """ Hard-links restored widgets heavily back to the native Qt C++ signal logic layer """
         for c in self.canvas.findChildren(BaseComponent):
             if isinstance(c, WidgetButton):
                 c.run_script_requested.connect(self.engine.run_script)
+
             elif isinstance(c, WidgetConsole):
-                self.engine.stdout_emitted.connect(c.append_text)
-                self.engine.error_emitted.connect(c.append_text)
+                try:
+                    self.engine.stdout_emitted.connect(c.append_text)
+                    self.engine.error_emitted.connect(c.append_text)
+                except Exception:
+                    pass
+
             elif isinstance(c, WidgetInteractiveConsole):
-                self.engine.stdout_emitted.connect(c.append_text)
-                self.engine.error_emitted.connect(c.append_text)
-                c.stdin_submitted.connect(self.engine.send_input)
+                try:
+                    self.engine.stdout_emitted.connect(c.append_text)
+                    self.engine.error_emitted.connect(c.append_text)
+                    c.stdin_submitted.connect(self.engine.send_input)
+                except Exception:
+                    pass
 
     def toggle(self):
         state = self.edit_btn.isChecked()
         self.canvas.set_edit_mode(state)
         self.sidebar_container.setVisible(state)
 
-    def closeEvent(self, event):
-        # Kill any running process before closing to prevent QProcess orphan warning
-        self.engine.kill()
+    def save_project(self):
+        self.canvas._refresh_relative_geometry_for_all_widgets()
         package_manager.save_window(self.window_id, self.canvas)
+
+    def closeEvent(self, event):
+        self.engine.kill()
+
+        try:
+            self._save_window_state()
+            self.save_project()
+        except Exception as e:
+            print(f"Error during close save: {e}")
+
         event.accept()

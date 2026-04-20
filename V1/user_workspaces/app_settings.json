@@ -1,12 +1,11 @@
 {
-    "language": "en",
     "dashboard": {
-        "zoom": 130,
+        "zoom": 100,
         "geometry": {
-            "x": 554,
-            "y": 68,
+            "x": 397,
+            "y": 56,
             "width": 700,
-            "height": 687
+            "height": 686
         }
     }
 }
