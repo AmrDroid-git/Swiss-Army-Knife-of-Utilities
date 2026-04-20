@@ -1,6 +1,6 @@
 import os
 from PySide6.QtWidgets import (QFrame, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QMessageBox,
-                               QScrollArea)
+                               QScrollArea, QApplication)
 from PySide6.QtCore import Qt, QPoint
 from app.widgets import (
     BaseComponent, WidgetButton, WidgetIText, WidgetOText,
@@ -123,7 +123,19 @@ class CustomWindow(QWidget):
         super().__init__()
         self.window_id = window_id
         self.setWindowTitle(f"Project Workspace: {window_id.replace('_',' ')}")
-        self.resize(1100, 750)
+        
+        # Calculate 70% of screen size for the window
+        screen = QApplication.primaryScreen().geometry()
+        window_width = int(screen.width() * 0.7)
+        window_height = int(screen.height() * 0.7)
+        
+        # Resize window to 70% of screen
+        self.resize(window_width, window_height)
+        
+        # Center window on screen
+        center_x = (screen.width() - window_width) // 2
+        center_y = (screen.height() - window_height) // 2
+        self.move(center_x, center_y)
         
         # Theme comes from the application-level stylesheet applied in main.py — no override needed here.
         

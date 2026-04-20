@@ -60,8 +60,10 @@ class TranslationManager:
             if os.path.exists(SETTINGS_FILE):
                 with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    lang_code = data.get("language", "en")
-                    self.set_language_by_code(lang_code)
+                    
+                lang_code = data.get("language", "en")
+                if lang_code in self.translations:
+                    self.current_language = lang_code
         except Exception as e:
             print(f"Error loading settings: {e}")
     
@@ -69,12 +71,21 @@ class TranslationManager:
         """Save language preference."""
         try:
             os.makedirs(os.path.dirname(SETTINGS_FILE), exist_ok=True)
-            data = {"language": self.current_language}
+            data = {}
+            if os.path.exists(SETTINGS_FILE):
+                try:
+                    with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        if not isinstance(data, dict):
+                            data = {}
+                except Exception:
+                    data = {}
+            data["language"] = self.current_language
             with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=4)
+                json.dump(data, f, indent=4, ensure_ascii=False)
         except Exception as e:
             print(f"Error saving settings: {e}")
-    
+            
     def get(self, key, default=""):
         """Get translated string for the current language."""
         if self.current_language in self.translations:

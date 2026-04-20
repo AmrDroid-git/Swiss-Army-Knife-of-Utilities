@@ -2,10 +2,11 @@ import os
 import shutil
 from PySide6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QInputDialog, 
                                QTreeWidget, QTreeWidgetItem, QLabel, QMessageBox, QFileDialog, QMenu, QWidget, QComboBox, QDialog)
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QIcon, QTransform
 from app.ui.dynamic_canvas import CustomWindow
 from app.core import package_manager, group_manager, theme_manager
+from app.core.zoom_manager import ZoomManager
 from app.translator import get_translator, t, get_language_signal
 
 class Dashboard(QMainWindow):
@@ -17,6 +18,10 @@ class Dashboard(QMainWindow):
         super().__init__()
         self.setWindowTitle("Visual Script Builder - Universal Dashboard")
         self.resize(700, 750)
+        
+        # Initialize zoom manager and load saved zoom level
+        self.zoom_manager = ZoomManager()
+        self.zoom_manager.load_zoom()
         
         # Theme is applied globally via QApplication in main.py.
         # No per-window stylesheet needed here.
@@ -52,6 +57,11 @@ class Dashboard(QMainWindow):
         view_menu.addAction(t("open_selected"), self.open_win)
         view_menu.addAction(t("move_to_group"), self.move_selected_to_group)
         
+        # ZOOM MENU
+        zoom_menu = menubar.addMenu(t("zoom"))
+        zoom_menu.addAction(t("zoom_in"), self.zoom_in)
+        zoom_menu.addAction(t("zoom_out"), self.zoom_out)
+        
         # SETTINGS MENU
         settings_menu = menubar.addMenu(t("settings"))
         settings_menu.addAction(t("appearance"), self.show_appearance_settings)
@@ -79,16 +89,56 @@ class Dashboard(QMainWindow):
         language_signal = get_language_signal()
         language_signal.connect(self.on_language_changed)
         
-        # Center window on screen
-        self.center_on_screen()
-
-    def center_on_screen(self):
-        """Center the window on the screen."""
-        from PySide6.QtWidgets import QApplication
-        screen_geometry = QApplication.primaryScreen().geometry()
-        x = (screen_geometry.width() - self.width()) // 2
-        y = (screen_geometry.height() - self.height()) // 2
-        self.move(x, y)
+        # Load and apply saved window geometry
+        self.load_window_state()
+        
+        # Apply loaded zoom level to UI
+        self.apply_zoom()
+    
+    def closeEvent(self, event):
+        """Save zoom and window state when closing the dashboard."""
+        # Use unified save to avoid data loss from concurrent writes
+        geometry = {
+            "x": self.x(),
+            "y": self.y(),
+            "width": self.width(),
+            "height": self.height()
+        }
+        self.zoom_manager.save_settings(geometry=geometry)
+        event.accept()
+    
+    def load_window_state(self):
+        """Load saved dashboard window geometry (size and position)."""
+        try:
+            import json
+            from PySide6.QtWidgets import QApplication
+            
+            if os.path.exists(self.zoom_manager.SETTINGS_FILE):
+                with open(self.zoom_manager.SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    dashboard_state = data.get("dashboard", {})
+                    
+                    # Load window geometry
+                    if "geometry" in dashboard_state:
+                        geom = dashboard_state["geometry"]
+                        saved_x = geom.get("x", 0)
+                        saved_y = geom.get("y", 0)
+                        saved_width = geom.get("width", 700)
+                        saved_height = geom.get("height", 750)
+                        
+                        # Restore size
+                        self.resize(saved_width, saved_height)
+                        
+                        # If window was at origin or far left, center it instead
+                        screen = QApplication.primaryScreen().geometry()
+                        if saved_x < 100:  # If x position is near edge, center it
+                            center_x = (screen.width() - saved_width) // 2
+                            self.move(center_x, saved_y)
+                        else:
+                            # Otherwise restore saved position
+                            self.move(saved_x, saved_y)
+        except Exception:
+            pass
     
     def on_language_changed(self, language_code):
         """Called when language changes - refresh all translations immediately."""
@@ -121,6 +171,11 @@ class Dashboard(QMainWindow):
         view_menu = menubar.addMenu(t("view"))
         view_menu.addAction(t("open_selected"), self.open_win)
         view_menu.addAction(t("move_to_group"), self.move_selected_to_group)
+        
+        # ZOOM MENU
+        zoom_menu = menubar.addMenu(t("zoom"))
+        zoom_menu.addAction(t("zoom_in"), self.zoom_in)
+        zoom_menu.addAction(t("zoom_out"), self.zoom_out)
         
         # SETTINGS MENU
         settings_menu = menubar.addMenu(t("settings"))
@@ -503,3 +558,44 @@ class Dashboard(QMainWindow):
             if translator.set_language(selected_lang):
                 # Language changed signal will trigger automatic refresh
                 pass
+    
+    def zoom_in(self):
+        """Zoom in the dashboard UI by scaling fonts and widget sizes."""
+        new_zoom = self.zoom_manager.zoom_in()
+        self.apply_zoom()
+        self.zoom_manager.save_settings()  # Save zoom immediately
+    
+    def zoom_out(self):
+        """Zoom out the dashboard UI by scaling fonts and widget sizes."""
+        new_zoom = self.zoom_manager.zoom_out()
+        self.apply_zoom()
+        self.zoom_manager.save_settings()  # Save zoom immediately
+    
+    def apply_zoom(self):
+        """Apply current zoom level to all dashboard UI elements."""
+        zoom_factor = self.zoom_manager.get_zoom_factor()
+        base_font_size = 10
+        base_header_size = 18
+        base_tree_item_height = 24
+        
+        # Scale header font
+        header_font_size = int(base_header_size * zoom_factor)
+        self.header.setStyleSheet(f"font-size: {header_font_size}px; padding: 8px 0px; font-weight: bold;")
+        
+        # Scale tree widget font
+        tree_font = self.tree.font()
+        tree_font.setPointSize(max(8, int(base_font_size * zoom_factor)))
+        self.tree.setFont(tree_font)
+        
+        # Scale tree item height - need to use QSize object
+        item_height = max(20, int(base_tree_item_height * zoom_factor))
+        item_size = QSize(0, item_height)
+        
+        # Recursively apply size hint to all tree items
+        def apply_size_to_items(item):
+            item.setSizeHint(0, item_size)
+            for i in range(item.childCount()):
+                apply_size_to_items(item.child(i))
+        
+        for i in range(self.tree.topLevelItemCount()):
+            apply_size_to_items(self.tree.topLevelItem(i))
