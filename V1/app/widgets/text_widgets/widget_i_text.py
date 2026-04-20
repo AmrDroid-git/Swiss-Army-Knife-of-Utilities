@@ -48,7 +48,9 @@ class WidgetIText(BaseComponent):
         self.handle_base_actions(action, font_act, res_act, del_act)
 
     def apply_font(self, font):
+        font_str = f"{font.family()}, Arial, sans-serif"
         self.entry.setFont(font)
+        self.entry.setStyleSheet(f"QLineEdit {{font-family: '{font_str}'; font-size: {font.pointSize()}pt !important;}}")
 
     def get_value(self): 
         """ Called by the button execution sequence to fetch the text data """

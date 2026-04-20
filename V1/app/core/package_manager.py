@@ -5,7 +5,8 @@ from PySide6.QtCore import QPoint
 from app.widgets import (
     BaseComponent, WidgetButton, WidgetIText, WidgetOText,
     WidgetIFileLink, WidgetOFileLink, WidgetIFolderLink, WidgetOFolderLink,
-    WidgetConsole, WidgetInteractiveConsole, WidgetLabel, WidgetRequirementsLink
+    WidgetConsole, WidgetInteractiveConsole, WidgetLabel, WidgetRequirementsLink,
+    WidgetSelect
 )
 
 BASE_PROJECT_DIR = "user_workspaces"
@@ -46,6 +47,7 @@ def load_window(win_id, canvas):
             elif comp_type == "widget_label": obj = WidgetLabel(canvas, pos)
             elif comp_type == "widget_i_text": obj = WidgetIText(canvas, pos)
             elif comp_type == "widget_o_text": obj = WidgetOText(canvas, pos)
+            elif comp_type == "widget_select": obj = WidgetSelect(canvas, pos)
             elif comp_type == "widget_i_file_link": obj = WidgetIFileLink(canvas, pos)
             elif comp_type == "widget_o_file_link": obj = WidgetOFileLink(canvas, pos)
             elif comp_type == "widget_i_folder_link": obj = WidgetIFolderLink(canvas, pos)

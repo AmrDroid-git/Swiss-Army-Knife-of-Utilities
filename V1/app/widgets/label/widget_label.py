@@ -33,7 +33,9 @@ class WidgetLabel(BaseComponent):
         self.handle_base_actions(action, font_act, res_act, del_act)
 
     def apply_font(self, font):
+        font_str = f"{font.family()}, Arial, sans-serif"
         self.lbl.setFont(font)
+        self.lbl.setStyleSheet(f"QLabel {{font-family: '{font_str}'; font-size: {font.pointSize()}pt !important;}}")
 
     def to_dict(self):
         """ Include the label text when saving the widget layout. """

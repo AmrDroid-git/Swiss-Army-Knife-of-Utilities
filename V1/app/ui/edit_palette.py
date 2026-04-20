@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, QMimeData, QPoint
-from PySide6.QtGui import QDrag, QPixmap
+from PySide6.QtGui import QDrag, QPixmap, QColor, QPainter
 from PySide6.QtCore import QSize
 
 class ToolboxItem(QLabel):
@@ -39,10 +39,16 @@ class ToolboxItem(QLabel):
             mime.setData("application/x-widget-template", self.type_id.encode('utf-8'))
             drag.setMimeData(mime)
             
-            # Create a visual pixmap of this button to show while dragging
-            pixmap = QPixmap(self.size())
-            self.render(pixmap)
+            # Create a minimal pixmap (nearly invisible) to avoid the ghost image glitch
+            # Just a tiny semi-transparent dot
+            pixmap = QPixmap(24, 24)
+            pixmap.fill(Qt.transparent)
+            painter = QPainter(pixmap)
+            painter.fillRect(pixmap.rect(), QColor(100, 100, 100, 60))
+            painter.end()
+            
             drag.setPixmap(pixmap)
-            drag.setHotSpot(QPoint(pixmap.width() // 2, pixmap.height() // 2))
+            drag.setHotSpot(QPoint(12, 12))
             
             drag.exec(Qt.CopyAction)
+

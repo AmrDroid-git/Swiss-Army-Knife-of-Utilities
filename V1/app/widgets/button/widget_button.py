@@ -69,7 +69,9 @@ class WidgetButton(BaseComponent):
         self.handle_base_actions(action, font_act, res_act, del_act)
 
     def apply_font(self, font):
+        font_str = f"{font.family()}, Arial, sans-serif"
         self.btn.setFont(font)
+        self.btn.setStyleSheet(f"QPushButton {{font-family: '{font_str}'; font-size: {font.pointSize()}pt !important;}}")
 
     def rename_script_folder(self, new_button_name):
         """

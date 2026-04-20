@@ -1,0 +1,89 @@
+[
+    {
+        "comp_type": "widget_button",
+        "x": 129,
+        "y": 257,
+        "width": 187,
+        "height": 53,
+        "arg_order": 0,
+        "properties": {
+            "custom_font": "Showcard Gothic,18,-1,5,400,0,0,0,0,0,0,0,0,0,0,192,Regular"
+        },
+        "label": "Run Script",
+        "script_path": "user_workspaces\\additionJava\\scripts\\Run_Script\\Main.java",
+        "script_type": "java",
+        "is_compiled": true,
+        "script_folder_name": "Run_Script"
+    },
+    {
+        "comp_type": "widget_select",
+        "x": 540,
+        "y": 128,
+        "width": 93,
+        "height": 68,
+        "arg_order": 1,
+        "properties": {
+            "options": [
+                "5",
+                "10",
+                "15"
+            ]
+        },
+        "value": "15"
+    },
+    {
+        "comp_type": "widget_i_text",
+        "x": 68,
+        "y": 112,
+        "width": 95,
+        "height": 77,
+        "arg_order": 0,
+        "properties": {
+            "custom_font": "Outfit,26,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+        },
+        "value": "5"
+    },
+    {
+        "comp_type": "widget_label",
+        "x": 481,
+        "y": 32,
+        "width": 107,
+        "height": 74,
+        "arg_order": 0,
+        "properties": {
+            "custom_font": "Palace Script MT,14,-1,5,400,1,0,0,0,0,0,0,0,0,0,192,Regular"
+        },
+        "text": "SELECT:"
+    },
+    {
+        "comp_type": "widget_requirements_link",
+        "x": 747,
+        "y": 251,
+        "width": 57,
+        "height": 30,
+        "arg_order": 0,
+        "properties": {},
+        "label": "\u24d8 Info",
+        "md_file_path": "C:/Users/amrdr/OneDrive/Bureau/TEST SCRIPTS/pillow.md",
+        "workspace_md_path": "user_workspaces\\additionJava\\docs\\pillow.md",
+        "widget_name": "Requirements"
+    },
+    {
+        "comp_type": "widget_interactive_console",
+        "x": 65,
+        "y": 379,
+        "width": 524,
+        "height": 250,
+        "arg_order": 0,
+        "properties": {}
+    },
+    {
+        "comp_type": "widget_console",
+        "x": 586,
+        "y": 384,
+        "width": 462,
+        "height": 237,
+        "arg_order": 0,
+        "properties": {}
+    }
+]

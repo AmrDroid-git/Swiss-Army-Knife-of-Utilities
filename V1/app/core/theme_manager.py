@@ -10,8 +10,6 @@ LIGHT_STYLESHEET = """
 QWidget {
     background-color: #f0f2f5;
     color: #1a1a2e;
-    font-family: 'Outfit', 'Segoe UI', Arial, sans-serif;
-    font-size: 13px;
 }
 QMainWindow, QDialog {
     background-color: #f0f2f5;
@@ -209,8 +207,6 @@ DARK_STYLESHEET = """
 QWidget {
     background-color: #0f1117;
     color: #e2e8f0;
-    font-family: 'Outfit', 'Segoe UI', Arial, sans-serif;
-    font-size: 13px;
 }
 QMainWindow, QDialog {
     background-color: #0f1117;
@@ -409,8 +405,6 @@ HACKING_STYLESHEET = """
 QWidget {
     background-color: #030a03;
     color: #00ff41;
-    font-family: 'Courier New', 'Lucida Console', monospace;
-    font-size: 13px;
 }
 QMainWindow, QDialog {
     background-color: #030a03;

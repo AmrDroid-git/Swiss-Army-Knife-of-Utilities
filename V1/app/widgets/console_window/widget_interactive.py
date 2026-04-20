@@ -43,13 +43,35 @@ class WidgetInteractiveConsole(BaseComponent):
             return
             
         menu = QMenu(self)
-        font_act, res_act, del_act = self.add_base_actions(menu)
+        # Add only resize and delete actions (NO font action for console)
+        menu.addSeparator()
+        res_act = menu.addAction(t("resize"))
+        del_act = menu.addAction(t("delete"))
+        
         action = menu.exec(event.globalPos())
-        self.handle_base_actions(action, font_act, res_act, del_act)
+        if action == res_act:
+            self.enable_resize_mode()
+        elif action == del_act:
+            self.delete_widget()
 
     def apply_font(self, font):
-        self.console_output.setFont(font)
-        self.console_input.setFont(font)
+        """
+        For interactive console, only change font size, NOT font family.
+        This preserves the console's appearance and background colors.
+        """
+        # Only apply font size to output, keep the original font family
+        output_font = self.console_output.font()
+        output_font.setPointSize(font.pointSize())
+        self.console_output.setFont(output_font)
+        
+        # Only apply font size to input, keep the original font family
+        input_font = self.console_input.font()
+        input_font.setPointSize(font.pointSize())
+        self.console_input.setFont(input_font)
+        
+        # Use stylesheet ONLY for font-size with !important, no font-family
+        self.console_output.setStyleSheet(f"QPlainTextEdit {{font-size: {font.pointSize()}pt !important;}}")
+        self.console_input.setStyleSheet(f"QLineEdit {{font-size: {font.pointSize()}pt !important;}}")
 
     def append_text(self, text):
         """ Appends strings physically returning from the running python script. """

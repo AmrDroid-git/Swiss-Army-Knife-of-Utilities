@@ -5,7 +5,8 @@ from PySide6.QtCore import Qt, QPoint
 from app.widgets import (
     BaseComponent, WidgetButton, WidgetIText, WidgetOText,
     WidgetIFileLink, WidgetOFileLink, WidgetIFolderLink, WidgetOFolderLink,
-    WidgetConsole, WidgetInteractiveConsole, WidgetLabel, WidgetRequirementsLink
+    WidgetConsole, WidgetInteractiveConsole, WidgetLabel, WidgetRequirementsLink,
+    WidgetSelect
 )
 from app.ui.edit_palette import ToolboxItem
 from app.core import package_manager
@@ -88,6 +89,7 @@ class EditorCanvas(QFrame):
         elif tid == "widget_label": obj = WidgetLabel(self, pos)
         elif tid == "widget_i_text": obj = WidgetIText(self, pos)
         elif tid == "widget_o_text": obj = WidgetOText(self, pos)
+        elif tid == "widget_select": obj = WidgetSelect(self, pos)
         elif tid == "widget_i_file_link": obj = WidgetIFileLink(self, pos)
         elif tid == "widget_o_file_link": obj = WidgetOFileLink(self, pos)
         elif tid == "widget_i_folder_link": obj = WidgetIFolderLink(self, pos)
@@ -169,6 +171,7 @@ class CustomWindow(QWidget):
         s_lay.addWidget(ToolboxItem(t("title_label"), "widget_label"))
         s_lay.addWidget(ToolboxItem(t("text_input"), "widget_i_text"))
         s_lay.addWidget(ToolboxItem(t("text_output"), "widget_o_text"))
+        s_lay.addWidget(ToolboxItem(t("select_field"), "widget_select"))
         s_lay.addWidget(ToolboxItem(t("file_input"), "widget_i_file_link"))
         s_lay.addWidget(ToolboxItem(t("folder_input"), "widget_i_folder_link"))
         s_lay.addWidget(ToolboxItem(t("safe_output"), "widget_o_folder_link"))

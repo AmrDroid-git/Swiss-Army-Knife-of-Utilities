@@ -2,7 +2,7 @@
     "groups": [
         {
             "name": "Ungrouped",
-            "expanded": false,
+            "expanded": true,
             "windows": [
                 "counter",
                 "cppcounter",
@@ -16,12 +16,13 @@
                 "add",
                 "dfgd",
                 "addition",
-                "compilation_error"
+                "compilation_error",
+                "additionJava"
             ]
         },
         {
             "name": "coutner",
-            "expanded": true,
+            "expanded": false,
             "windows": [
                 "pythoncounter",
                 "Ccounter"

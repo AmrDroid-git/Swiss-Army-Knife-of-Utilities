@@ -41,7 +41,9 @@ class WidgetOFolderLink(BaseComponent):
         self.handle_base_actions(action, font_act, res_act, del_act)
 
     def apply_font(self, font):
+        font_str = f"{font.family()}, Arial, sans-serif"
         self.entry.setFont(font)
+        self.entry.setStyleSheet(f"QLineEdit {{font-family: '{font_str}'; font-size: {font.pointSize()}pt !important;}}")
 
     def browse(self):
         if self.is_edit_mode: return

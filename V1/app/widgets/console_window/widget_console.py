@@ -21,7 +21,7 @@ class WidgetConsole(BaseComponent):
         self.layout.addWidget(self.console_output)
 
     def contextMenuEvent(self, event):
-        """ Adds standard deletion/resize functionality if right-clicked. """
+        """ Adds standard deletion/resize functionality if right-clicked (NO font change option). """
         if not self.is_edit_mode:
             menu = QMenu(self)
             clear_act = menu.addAction(t("clear_console"))
@@ -30,12 +30,28 @@ class WidgetConsole(BaseComponent):
             return
             
         menu = QMenu(self)
-        font_act, res_act, del_act = self.add_base_actions(menu)
+        # Add only resize and delete actions (NO font action for console)
+        menu.addSeparator()
+        res_act = menu.addAction(t("resize"))
+        del_act = menu.addAction(t("delete"))
+        
         action = menu.exec(event.globalPos())
-        self.handle_base_actions(action, font_act, res_act, del_act)
+        if action == res_act:
+            self.enable_resize_mode()
+        elif action == del_act:
+            self.delete_widget()
 
     def apply_font(self, font):
-        self.console_output.setFont(font)
+        """
+        For console output, only change font size, NOT font family.
+        This preserves the console's appearance and background colors.
+        """
+        # Only apply font size, keep the original font family
+        current_font = self.console_output.font()
+        current_font.setPointSize(font.pointSize())
+        self.console_output.setFont(current_font)
+        # Use stylesheet ONLY for font-size with !important, no font-family
+        self.console_output.setStyleSheet(f"QPlainTextEdit {{font-size: {font.pointSize()}pt !important;}}")
 
     def append_text(self, text):
         """ Helper method for script engine to pump python stdout into the UI. """

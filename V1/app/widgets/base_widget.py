@@ -102,9 +102,12 @@ class BaseComponent(QWidget):
                 self._drag_pos = event.pos()
                 # Compute offset using global coordinates to prevent feedback loop glitching
                 self._global_drag_offset = event.globalPosition().toPoint() - self.pos()
+                # Mark that we're starting a potential drag from toolbar
+                self._is_dragging_from_toolbar = getattr(self, 'is_template', False)
             else:
                 self._drag_pos = None
                 self._global_drag_offset = None
+                self._is_dragging_from_toolbar = False
                 
         super().mousePressEvent(event)
 
@@ -172,33 +175,12 @@ class BaseComponent(QWidget):
                 
             # 3. Moving actively (Button Held!)
             elif self._drag_pos:
-                # Check if this widget is sitting in the toolbar (it shouldn't move itself)
-                if getattr(self, 'is_template', False):
-                    from PySide6.QtWidgets import QApplication
-                    # Make sure the user dragged far enough to count as a real drag
-                    if (event.pos() - self._drag_pos).manhattanLength() >= QApplication.startDragDistance():
-                        from PySide6.QtGui import QDrag
-                        from PySide6.QtCore import QMimeData
-                        
-                        drag = QDrag(self)
-                        mime_data = QMimeData()
-                        
-                        # Pack the widget type so the Canvas knows exactly what to spawn on Drop
-                        mime_data.setData("application/x-widget-template", self.comp_type.encode('utf-8'))
-                        drag.setMimeData(mime_data)
-                        
-                        # MAGIC HAPPENS HERE: Take a visual snapshot (ghost image) that follows the mouse
-                        drag.setPixmap(self.grab())
-                        drag.setHotSpot(self._drag_pos)
-                        
-                        drag.exec(Qt.CopyAction)
+                # Normal movement across the canvas for already-placed widgets using smooth global positioning
+                if self._global_drag_offset is not None:
+                    new_global_pos = event.globalPosition().toPoint()
+                    self.move(new_global_pos - self._global_drag_offset)
                 else:
-                    # Normal movement across the canvas for already-placed widgets using smooth global positioning
-                    if self._global_drag_offset is not None:
-                        new_global_pos = event.globalPosition().toPoint()
-                        self.move(new_global_pos - self._global_drag_offset)
-                    else:
-                        self.move(self.mapToParent(event.pos() - self._drag_pos))
+                    self.move(self.mapToParent(event.pos() - self._drag_pos))
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -208,7 +190,9 @@ class BaseComponent(QWidget):
             self._global_drag_offset = None
             self._resize_dir = None
             self.setCursor(Qt.ArrowCursor)
-            self.update_relative_geometry() # Anchor the new location securely via mathematical proportions instantly
+            # Only update relative geometry if this is not a template widget
+            if not getattr(self, 'is_template', False):
+                self.update_relative_geometry()
         super().mouseReleaseEvent(event)
 
     def add_base_actions(self, menu):
@@ -228,7 +212,10 @@ class BaseComponent(QWidget):
             # Use current chosen widget font as default selection index
             current_font = self.font()
             if "custom_font" in self.properties:
-                current_font.fromString(self.properties["custom_font"])
+                # Properly load font from string - fromString() returns bool, doesn't modify the font
+                temp_font = QFont()
+                temp_font.fromString(self.properties["custom_font"])
+                current_font = temp_font
                 
             ok, font = QFontDialog.getFont(current_font, self)
             if ok:
@@ -248,6 +235,9 @@ class BaseComponent(QWidget):
     def apply_font(self, font):
         """ Can be deeply overridden by specific UI widgets to hook onto child QText layers purely. """
         self.setFont(font)
+        # Also use stylesheet to ensure the font overrides any theme stylesheets
+        font_str = f"{font.family()}, Arial, sans-serif"
+        self.setStyleSheet(f"{{font-family: '{font_str}'; font-size: {font.pointSize()}pt !important;}}")
 
     def to_dict(self):
         """ Serializes core widget properties into a Python dictionary for easy saving to config.json. """
@@ -273,8 +263,10 @@ class BaseComponent(QWidget):
         if "custom_font" in self.properties:
             from PySide6.QtGui import QFont
             f = QFont()
-            f.fromString(self.properties["custom_font"])
-            self.apply_font(f)
+            # fromString() returns bool - properly apply the loaded font
+            success = f.fromString(self.properties["custom_font"])
+            if success:
+                self.apply_font(f)
         
         # Schedule geometric scale mapping softly on load
         from PySide6.QtCore import QTimer
