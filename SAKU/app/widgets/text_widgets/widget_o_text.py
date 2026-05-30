@@ -37,9 +37,7 @@ class WidgetOText(BaseComponent):
         self.handle_base_actions(action, font_act, res_act, del_act)
 
     def apply_font(self, font):
-        font_str = f"{font.family()}, Arial, sans-serif"
-        self.entry.setFont(font)
-        self.entry.setStyleSheet(f"QLineEdit {{font-family: '{font_str}'; font-size: {font.pointSize()}pt !important;}}")
+        self._apply_font_to_widget(self.entry, font, "QLineEdit")
 
     def get_value(self): 
         return self.entry.text()

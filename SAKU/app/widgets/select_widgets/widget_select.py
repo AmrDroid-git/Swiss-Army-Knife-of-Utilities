@@ -200,19 +200,10 @@ class WidgetSelect(BaseComponent):
         dialog.exec()
 
     def apply_font(self, font):
-        """
-        Override base to apply font to the inner QComboBox and its dropdown.
-        Called when user selects "Change Font" from context menu.
-        """
-        font_str = f"{font.family()}, Arial, sans-serif"
-        # Apply font to the main combobox
-        self.combo.setFont(font)
-        # Also apply to the dropdown view/list
+        """Apply font to the inner QComboBox and its dropdown."""
+        self._apply_font_to_widget(self.combo, font, "QComboBox")
         if self.combo.view():
             self.combo.view().setFont(font)
-        # Use stylesheet to ensure font overrides theme stylesheets
-        self.combo.setStyleSheet(f"QComboBox {{font-family: '{font_str}'; font-size: {font.pointSize()}pt !important;}}")
-        # Also apply to the model
         if self.combo.model():
             self.combo.model().layoutChanged.emit()
 

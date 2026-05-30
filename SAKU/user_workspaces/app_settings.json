@@ -1,11 +1,12 @@
 {
     "dashboard": {
-        "zoom": 100,
+        "zoom": 130,
         "geometry": {
             "x": 397,
             "y": 56,
             "width": 700,
             "height": 686
         }
-    }
+    },
+    "theme": "white"
 }

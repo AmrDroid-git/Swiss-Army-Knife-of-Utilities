@@ -13,13 +13,12 @@ def main():
     
     app = QApplication(sys.argv)
     
-    # Register the bundled Outfit font
-    font_path = os.path.join(os.path.dirname(__file__), "app", "assets", "fonts", "Outfit.ttf")
-    if os.path.exists(font_path):
-        QFontDatabase.addApplicationFont(font_path)
-    
-    # Set default application font with better rendering hints
-    default_font = QFont("Outfit", 10)
+    # Use the operating system default UI font instead of a bundled custom font.
+    # This keeps the application looking closer to normal Windows/Linux apps.
+    default_font = QFontDatabase.systemFont(QFontDatabase.GeneralFont)
+    if not default_font.family():
+        default_font = QFont("Segoe UI", 10)
+    default_font.setPointSize(10)
     default_font.setStyleStrategy(QFont.PreferAntialias | QFont.PreferQuality)
     app.setFont(default_font)
     

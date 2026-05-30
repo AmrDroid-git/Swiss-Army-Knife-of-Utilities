@@ -10,7 +10,22 @@ class ToolboxItem(QLabel):
     Styling is intentionally kept neutral so the active theme controls appearance.
     """
     def __init__(self, text, type_id):
-        super().__init__(text)
+        emoji_map = {
+            "widget_button": "▶️",
+            "widget_label": "🏷️",
+            "widget_i_text": "🔤",
+            "widget_o_text": "📝",
+            "widget_select": "🔽",
+            "widget_i_file_link": "📄",
+            "widget_o_file_link": "💾",
+            "widget_i_folder_link": "📁",
+            "widget_o_folder_link": "📂",
+            "widget_console": "🖥️",
+            "widget_interactive_console": "⌨️",
+            "widget_requirements_link": "📦",
+        }
+        display_text = f"{emoji_map.get(type_id, '•')}  {text}"
+        super().__init__(display_text)
         self.type_id = type_id
         
         # Use a subtle accent border to make items visually distinct without
@@ -27,7 +42,7 @@ class ToolboxItem(QLabel):
                 border-color: rgba(128, 128, 128, 0.6);
             }
         """)
-        self.setAlignment(Qt.AlignCenter)
+        self.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.setMinimumHeight(44)
 
     def mousePressEvent(self, event):

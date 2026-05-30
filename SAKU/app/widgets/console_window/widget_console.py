@@ -12,12 +12,20 @@ class WidgetConsole(BaseComponent):
         super().__init__(parent, "widget_console", pos)
         self.resize(400, 200)
         self.layout = QHBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setContentsMargins(4, 4, 4, 4)
         
         # Setting up a read-only terminal-like text box
         self.console_output = QPlainTextEdit()
         self.console_output.setReadOnly(True)
-        self.console_output.setStyleSheet("background-color: black; color: #00FF00;")
+        self.console_output.setStyleSheet(
+            "QPlainTextEdit { "
+            "background-color: #050505; "
+            "color: #00FF00; "
+            "border: 1px solid #6b7280; "
+            "border-radius: 4px; "
+            "padding: 6px; "
+            "}"
+        )
         self.layout.addWidget(self.console_output)
 
     def contextMenuEvent(self, event):
@@ -45,8 +53,17 @@ class WidgetConsole(BaseComponent):
         current_font = self.console_output.font()
         current_font.setPointSize(font.pointSize())
         self.console_output.setFont(current_font)
-        # Use stylesheet ONLY for font-size with !important, no font-family
-        self.console_output.setStyleSheet(f"QPlainTextEdit {{font-size: {font.pointSize()}pt !important;}}")
+        # Keep the visible console border/background while changing the size.
+        self.console_output.setStyleSheet(
+            f"QPlainTextEdit {{ "
+            f"background-color: #050505; "
+            f"color: #00FF00; "
+            f"border: 1px solid #6b7280; "
+            f"border-radius: 4px; "
+            f"padding: 6px; "
+            f"font-size: {font.pointSize()}pt; "
+            f"}}"
+        )
 
     def append_text(self, text):
         """ Helper method for script engine to pump python stdout into the UI. """

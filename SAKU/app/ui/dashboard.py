@@ -42,7 +42,6 @@ class Dashboard(QMainWindow):
         file_menu.addAction(t("new_group"), self.create_new_group)
         file_menu.addSeparator()
         file_menu.addAction(t("import_zip"), self.import_win)
-        file_menu.addAction(t("export_zip"), self.export_win_button)
         file_menu.addSeparator()
         file_menu.addAction(t("exit"), self.close)
         
@@ -156,7 +155,6 @@ class Dashboard(QMainWindow):
         file_menu.addAction(t("new_group"), self.create_new_group)
         file_menu.addSeparator()
         file_menu.addAction(t("import_zip"), self.import_win)
-        file_menu.addAction(t("export_zip"), self.export_win_button)
         file_menu.addSeparator()
         file_menu.addAction(t("exit"), self.close)
         

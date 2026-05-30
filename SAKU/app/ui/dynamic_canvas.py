@@ -2,9 +2,10 @@ import os
 import json
 from PySide6.QtWidgets import (
     QFrame, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QScrollArea, QApplication, QMessageBox
+    QScrollArea, QApplication, QMessageBox, QAbstractButton
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QSize, QRectF
+from PySide6.QtGui import QPainter, QColor
 from app.widgets import (
     BaseComponent, WidgetButton, WidgetIText, WidgetOText,
     WidgetIFileLink, WidgetOFileLink, WidgetIFolderLink, WidgetOFolderLink,
@@ -17,11 +18,45 @@ from app.core.script_engine import ScriptEngine
 from app.translator import t
 
 
+class ToggleSwitch(QAbstractButton):
+    """Small Chrome-like on/off switch used for Design Mode."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCheckable(True)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFixedSize(54, 28)
+        self.setToolTip(t("design_mode", "Design Mode"))
+        self.setAccessibleName(t("design_mode", "Design Mode"))
+
+    def sizeHint(self):
+        return QSize(54, 28)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(Qt.NoPen)
+
+        track = QRectF(1, 4, self.width() - 2, self.height() - 8)
+        if self.isChecked():
+            track_color = QColor("#2563eb")
+        else:
+            track_color = QColor("#bdbdbd") if self.isEnabled() else QColor("#d8d8d8")
+
+        painter.setBrush(track_color)
+        painter.drawRoundedRect(track, track.height() / 2, track.height() / 2)
+
+        knob_size = track.height() - 4
+        knob_x = track.right() - knob_size - 2 if self.isChecked() else track.left() + 2
+        knob_y = track.top() + 2
+        painter.setBrush(QColor("#ffffff"))
+        painter.drawEllipse(QRectF(knob_x, knob_y, knob_size, knob_size))
+
+
 class EditorCanvas(QFrame):
     def __init__(self, script_engine):
         super().__init__()
         self.setAcceptDrops(True)
-        self.setStyleSheet("EditorCanvas { border: 2px dashed #9ca3af; border-radius: 8px; }")
+        self.setStyleSheet("EditorCanvas { border: 2px dashed #b8b8b8; border-radius: 8px; }")
         self.is_edit_mode = False
         self.script_engine = script_engine
         self._loading_in_progress = False
@@ -71,10 +106,10 @@ class EditorCanvas(QFrame):
         self.is_edit_mode = state
 
         if state:
-            self.setStyleSheet("EditorCanvas { border: 2px dashed #6366f1; border-radius: 8px; }")
+            self.setStyleSheet("EditorCanvas { border: 2px dashed #707070; border-radius: 8px; }")
         else:
             self.setCursor(Qt.ArrowCursor)
-            self.setStyleSheet("EditorCanvas { border: 2px dashed #9ca3af; border-radius: 8px; }")
+            self.setStyleSheet("EditorCanvas { border: 2px dashed #b8b8b8; border-radius: 8px; }")
 
         for c in self.findChildren(BaseComponent):
             try:
@@ -178,6 +213,8 @@ class CustomWindow(QWidget):
         self._project_loaded_once = False
         self._window_state_restored = False
         self._last_saved_project_snapshot = None
+        self._edit_mode_entry_snapshot = None
+        self._project_dirty = False
 
         screen = QApplication.primaryScreen().geometry()
         window_width = int(screen.width() * 0.7)
@@ -194,9 +231,9 @@ class CustomWindow(QWidget):
 
         nav = QHBoxLayout()
 
-        self.edit_btn = QPushButton(t("design_mode"))
-        self.edit_btn.setCheckable(True)
-        self.edit_btn.clicked.connect(self.toggle)
+        self.edit_label = QLabel(t("design_mode", "Design Mode"))
+        self.edit_btn = ToggleSwitch()
+        self.edit_btn.toggled.connect(self.toggle)
 
         save_btn = QPushButton(t("save_project"))
         save_btn.clicked.connect(self.save_project)
@@ -206,6 +243,7 @@ class CustomWindow(QWidget):
 
         nav.addWidget(title_label)
         nav.addStretch()
+        nav.addWidget(self.edit_label)
         nav.addWidget(self.edit_btn)
         nav.addWidget(save_btn)
         self.layout.addLayout(nav)
@@ -294,15 +332,99 @@ class CustomWindow(QWidget):
         return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
     def _mark_project_as_saved(self):
-        """Stores the latest saved canvas snapshot in memory."""
-        self._last_saved_project_snapshot = self._get_project_snapshot()
+        """Stores the latest saved canvas snapshot in memory and clears dirty state."""
+        snapshot = self._get_project_snapshot()
+        self._last_saved_project_snapshot = snapshot
+        self._project_dirty = False
+
+        # If the user saves while still in Design Mode, make the current design
+        # the new clean baseline so leaving Design Mode will not ask again.
+        if self.canvas.is_edit_mode:
+            self._edit_mode_entry_snapshot = snapshot
+
+    def _capture_edit_mode_entry_snapshot(self):
+        """Remember the clean project state before user edits start."""
+        self._edit_mode_entry_snapshot = self._get_project_snapshot()
+
+    def _snapshots_equivalent(self, left_snapshot, right_snapshot, geometry_tolerance=3):
+        """Compare two project snapshots while ignoring tiny layout rounding noise.
+
+        Showing/hiding the Edit Mode sidebar can resize the canvas by a few
+        pixels. Qt then rounds widget geometry slightly differently, which made
+        the app ask to save even when the user changed nothing. Real changes
+        like adding/deleting widgets, changing text/font/options, or moving a
+        widget more than a few pixels are still detected.
+        """
+        if left_snapshot == right_snapshot:
+            return True
+
+        try:
+            left_data = json.loads(left_snapshot or "[]")
+            right_data = json.loads(right_snapshot or "[]")
+        except Exception:
+            return False
+
+        if len(left_data) != len(right_data):
+            return False
+
+        def stable_key(item):
+            comparable = dict(item)
+            for key in ("x", "y", "width", "height"):
+                comparable.pop(key, None)
+            return json.dumps(comparable, sort_keys=True, ensure_ascii=False)
+
+        left_data = sorted(left_data, key=stable_key)
+        right_data = sorted(right_data, key=stable_key)
+
+        for left_item, right_item in zip(left_data, right_data):
+            left_static = dict(left_item)
+            right_static = dict(right_item)
+
+            for key in ("x", "y", "width", "height"):
+                left_static.pop(key, None)
+                right_static.pop(key, None)
+
+            if left_static != right_static:
+                return False
+
+            for key in ("x", "y", "width", "height"):
+                try:
+                    left_value = int(left_item.get(key, 0))
+                    right_value = int(right_item.get(key, 0))
+                except Exception:
+                    return False
+
+                if abs(left_value - right_value) > geometry_tolerance:
+                    return False
+
+        return True
+
+    def _edit_session_has_changes(self):
+        """Return True only when something really changed during this edit session."""
+        if not self.canvas.is_edit_mode or self._edit_mode_entry_snapshot is None:
+            return False
+
+        current_snapshot = self._get_project_snapshot()
+        return not self._snapshots_equivalent(
+            current_snapshot,
+            self._edit_mode_entry_snapshot
+        )
 
     def _has_unsaved_project_changes(self):
-        """Checks if the current canvas is different from the last saved version."""
+        """Checks if the current project has real unsaved design changes."""
+        if self._project_dirty:
+            return True
+
+        if self._edit_session_has_changes():
+            return True
+
         if self._last_saved_project_snapshot is None:
             return False
 
-        return self._get_project_snapshot() != self._last_saved_project_snapshot
+        return not self._snapshots_equivalent(
+            self._get_project_snapshot(),
+            self._last_saved_project_snapshot
+        )
 
     def _enable_edit_mode_after_cancel_close(self):
         """Cancel closing and return the user to edit mode."""
@@ -401,10 +523,105 @@ class CustomWindow(QWidget):
                 except Exception:
                     pass
 
-    def toggle(self):
-        state = self.edit_btn.isChecked()
-        self.canvas.set_edit_mode(state)
-        self.sidebar_container.setVisible(state)
+    def _ask_before_leaving_edit_mode(self):
+        """Ask whether to save changes when the user turns Design Mode off."""
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle(t("unsaved_changes_title", "Unsaved changes"))
+        msg.setText(t("unsaved_changes_message", "You have unsaved changes in this window."))
+        msg.setInformativeText(
+            t(
+                "leave_edit_mode_question",
+                "Do you want to save before leaving Design Mode?"
+            )
+        )
+
+        save_btn = msg.addButton(
+            t("save_and_exit_edit_mode", "Save and leave edit mode"),
+            QMessageBox.AcceptRole
+        )
+        no_save_btn = msg.addButton(
+            t("leave_without_saving", "Leave without saving"),
+            QMessageBox.DestructiveRole
+        )
+        cancel_btn = msg.addButton(
+            t("stay_in_edit_mode", "Stay in edit mode"),
+            QMessageBox.RejectRole
+        )
+
+        msg.setDefaultButton(save_btn)
+        msg.setEscapeButton(cancel_btn)
+        msg.exec()
+
+        clicked = msg.clickedButton()
+        if clicked == save_btn:
+            return "save"
+        if clicked == no_save_btn:
+            return "discard"
+        return "cancel"
+
+    def toggle(self, checked=None):
+        state = self.edit_btn.isChecked() if checked is None else bool(checked)
+
+        # Entering Design Mode should not mark the project as modified.
+        # Capture the clean baseline BEFORE the sidebar is shown, because
+        # showing it resizes the canvas and can cause harmless Qt rounding noise.
+        if state:
+            self._capture_edit_mode_entry_snapshot()
+            self.canvas.set_edit_mode(True)
+            self.sidebar_container.show()
+            return
+
+        # Leaving Design Mode: first restore the normal full-width canvas, then
+        # compare against the baseline captured before Edit Mode was opened.
+        # This avoids false save prompts caused only by the sidebar shrinking the
+        # canvas while Edit Mode is visible.
+        if self.canvas.is_edit_mode:
+            baseline_snapshot = self._edit_mode_entry_snapshot
+
+            self.canvas.set_edit_mode(False)
+            self.sidebar_container.hide()
+            QApplication.processEvents()
+
+            has_changes = False
+            if baseline_snapshot is not None:
+                has_changes = not self._snapshots_equivalent(
+                    self._get_project_snapshot(),
+                    baseline_snapshot
+                )
+
+            if has_changes:
+                choice = self._ask_before_leaving_edit_mode()
+
+                if choice == "cancel":
+                    self.edit_btn.blockSignals(True)
+                    self.edit_btn.setChecked(True)
+                    self.edit_btn.blockSignals(False)
+                    self.canvas.set_edit_mode(True)
+                    self.sidebar_container.show()
+                    return
+
+                if choice == "discard":
+                    self._project_dirty = True
+
+                if choice == "save":
+                    try:
+                        self.save_project()
+                    except Exception as e:
+                        QMessageBox.critical(
+                            self,
+                            t("error", "Error"),
+                            f"Could not save the project:\n{e}"
+                        )
+                        self.edit_btn.blockSignals(True)
+                        self.edit_btn.setChecked(True)
+                        self.edit_btn.blockSignals(False)
+                        self.canvas.set_edit_mode(True)
+                        self.sidebar_container.show()
+                        return
+
+            self._edit_mode_entry_snapshot = None
+            return
 
     def save_project(self):
         save_width, save_height = self._get_logical_save_canvas_size()

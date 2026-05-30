@@ -16,6 +16,7 @@ class WidgetOFolderLink(BaseComponent):
         self.resize(220, 45)
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(4)
         
         self.entry = QLineEdit()
         self.entry.setPlaceholderText(t("output_folder"))
@@ -23,7 +24,8 @@ class WidgetOFolderLink(BaseComponent):
         self.layout.addWidget(self.entry)
         
         self.browse_btn = QPushButton(t("browse_button"))
-        self.browse_btn.setFixedWidth(30)
+        self.browse_btn.setObjectName("browseButton")
+        self.browse_btn.setFixedWidth(34)
         self.browse_btn.clicked.connect(self.browse)
         self.layout.addWidget(self.browse_btn)
 
@@ -41,9 +43,7 @@ class WidgetOFolderLink(BaseComponent):
         self.handle_base_actions(action, font_act, res_act, del_act)
 
     def apply_font(self, font):
-        font_str = f"{font.family()}, Arial, sans-serif"
-        self.entry.setFont(font)
-        self.entry.setStyleSheet(f"QLineEdit {{font-family: '{font_str}'; font-size: {font.pointSize()}pt !important;}}")
+        self._apply_font_to_widget(self.entry, font, "QLineEdit")
 
     def browse(self):
         if self.is_edit_mode: return

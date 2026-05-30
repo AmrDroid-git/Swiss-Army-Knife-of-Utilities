@@ -58,7 +58,7 @@ class BaseComponent(QWidget):
         # Provide Word/PPT style visual bounding box outlines during Edit Mode
         if enabled:
             self.setAttribute(Qt.WA_StyledBackground, True)
-            self.setStyleSheet("BaseComponent { border: 2px dashed #6366f1; border-radius: 4px; }")
+            self.setStyleSheet("BaseComponent { border: 2px dashed #707070; border-radius: 4px; }")
         else:
             self.setAttribute(Qt.WA_StyledBackground, False)
             self.setStyleSheet("")  # Clear, let the theme and child widgets decide
@@ -251,11 +251,23 @@ class BaseComponent(QWidget):
             current_font = self.font()
             if "custom_font" in self.properties:
                 temp_font = QFont()
-                temp_font.fromString(self.properties["custom_font"])
-                current_font = temp_font
+                if temp_font.fromString(self.properties["custom_font"]):
+                    current_font = temp_font
 
-            ok, font = QFontDialog.getFont(current_font, self)
-            if ok:
+            # PySide/PyQt builds differ here: some return (font, ok),
+            # others return (ok, font). Support both so the dialog never
+            # stores a boolean instead of a QFont.
+            result = QFontDialog.getFont(current_font, self)
+            if isinstance(result, tuple) and len(result) >= 2:
+                first, second = result[0], result[1]
+                if isinstance(first, bool):
+                    ok, font = first, second
+                else:
+                    font, ok = first, second
+            else:
+                font, ok = result, bool(result)
+
+            if ok and hasattr(font, "toString"):
                 self.properties["custom_font"] = font.toString()
                 self.apply_font(font)
 
@@ -265,12 +277,52 @@ class BaseComponent(QWidget):
         elif action == del_act:
             self.delete_widget()
 
+    def _font_point_size(self, font):
+        """Return a safe point size for Qt stylesheets."""
+        point_size = font.pointSize()
+        if point_size <= 0:
+            point_size = int(font.pointSizeF()) if font.pointSizeF() > 0 else 10
+        return max(1, point_size)
+
+    def _font_qss(self, selector, font):
+        """Build a small stylesheet that changes only typography.
+
+        The previous stylesheet quoted the whole fallback list as one family,
+        which made many normal Windows fonts look unchanged. This version also
+        saves the full style chosen in the font dialog: size, bold, italic,
+        underline, and strikeout.
+        """
+        family = font.family().replace('\\', '\\\\').replace('"', '\\"')
+        point_size = self._font_point_size(font)
+        weight = 700 if font.bold() else 400
+        style = "italic" if font.italic() else "normal"
+
+        decorations = []
+        if font.underline():
+            decorations.append("underline")
+        if font.strikeOut():
+            decorations.append("line-through")
+        decoration = " ".join(decorations) if decorations else "none"
+
+        return (
+            f'{selector} {{ '
+            f'font-family: "{family}"; '
+            f'font-size: {point_size}pt; '
+            f'font-weight: {weight}; '
+            f'font-style: {style}; '
+            f'text-decoration: {decoration}; '
+            f'}}'
+        )
+
+    def _apply_font_to_widget(self, widget, font, selector):
+        widget.setFont(font)
+        widget.setStyleSheet(self._font_qss(selector, font))
+
     def apply_font(self, font):
-        """ Can be deeply overridden by specific UI widgets to hook onto child QText layers purely. """
+        """Apply the selected font to this component and its child widgets."""
         self.setFont(font)
-        # Also use stylesheet to ensure the font overrides any theme stylesheets
-        font_str = f"{font.family()}, Arial, sans-serif"
-        self.setStyleSheet(f"{{font-family: '{font_str}'; font-size: {font.pointSize()}pt !important;}}")
+        for child in self.findChildren(QWidget):
+            child.setFont(font)
 
     def to_dict(self):
         """ Serializes core widget properties into a Python dictionary for easy saving to config.json. """
