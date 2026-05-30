@@ -21,25 +21,20 @@ class WidgetConsole(BaseComponent):
         self.layout.addWidget(self.console_output)
 
     def contextMenuEvent(self, event):
-        """ Adds standard deletion/resize functionality if right-clicked (NO font change option). """
+        """Adds clear in run mode, and shared resize/delete actions in edit mode."""
         if not self.is_edit_mode:
             menu = QMenu(self)
             clear_act = menu.addAction(t("clear_console"))
             if menu.exec(event.globalPos()) == clear_act:
                 self.clear_text()
             return
-            
+
         menu = QMenu(self)
-        # Add only resize and delete actions (NO font action for console)
-        menu.addSeparator()
-        res_act = menu.addAction(t("resize"))
-        del_act = menu.addAction(t("delete"))
-        
+
+        font_act, res_act, del_act = self.add_base_actions(menu, include_font=False)
+
         action = menu.exec(event.globalPos())
-        if action == res_act:
-            self.enable_resize_mode()
-        elif action == del_act:
-            self.delete_widget()
+        self.handle_base_actions(action, font_act, res_act, del_act)
 
     def apply_font(self, font):
         """

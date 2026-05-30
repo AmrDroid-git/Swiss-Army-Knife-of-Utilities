@@ -8,7 +8,9 @@
         {
             "name": "DOWNLOADERS",
             "expanded": false,
-            "windows": []
+            "windows": [
+                "yt"
+            ]
         }
     ]
 }

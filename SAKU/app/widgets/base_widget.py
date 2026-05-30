@@ -195,42 +195,75 @@ class BaseComponent(QWidget):
                 self.update_relative_geometry()
         super().mouseReleaseEvent(event)
 
-    def add_base_actions(self, menu):
-        """ Appends standard actions (Resize, Delete, Font) to any widget's custom right-click menu. """
+    def add_base_actions(self, menu, include_font=True):
+        """
+        Appends standard actions to any widget right-click menu.
+        Some widgets, like consoles, do not need font editing, so include_font can be False.
+        """
         menu.addSeparator()
-        font_act = menu.addAction(t("change_font"))
+        font_act = menu.addAction(t("change_font")) if include_font else None
         resize_act = menu.addAction(t("resize"))
         delete_act = menu.addAction(t("delete"))
         return font_act, resize_act, delete_act
 
+    def resize_widget(self):
+        """Shared resize dialog for all components."""
+        w, ok1 = QInputDialog.getInt(
+            self,
+            t("width_dialog_title"),
+            t("width_dialog_prompt"),
+            self.width(),
+            40,
+            10000
+        )
+        if not ok1:
+            return
+
+        h, ok2 = QInputDialog.getInt(
+            self,
+            t("height_dialog_title"),
+            t("height_dialog_prompt"),
+            self.height(),
+            20,
+            10000
+        )
+        if not ok2:
+            return
+
+        self.resize(w, h)
+        self.update_relative_geometry()
+
+    def enable_resize_mode(self):
+        """Backward-compatible name used by some widgets."""
+        self.resize_widget()
+
+    def delete_widget(self):
+        """Shared delete behavior for every canvas component."""
+        self.setParent(None)
+        self.deleteLater()
+
     def handle_base_actions(self, action, font_act, res_act, del_act):
-        """ Executes the logic for the precise standard resize, font styling, and delete context actions. """
-        if action == font_act:
+        """Executes the shared font, resize, and delete context actions."""
+        if font_act is not None and action == font_act:
             from PySide6.QtWidgets import QFontDialog
             from PySide6.QtGui import QFont
-            
-            # Use current chosen widget font as default selection index
+
             current_font = self.font()
             if "custom_font" in self.properties:
-                # Properly load font from string - fromString() returns bool, doesn't modify the font
                 temp_font = QFont()
                 temp_font.fromString(self.properties["custom_font"])
                 current_font = temp_font
-                
+
             ok, font = QFontDialog.getFont(current_font, self)
             if ok:
-                # Save purely mathematical abstract font string representing size/family/weight
                 self.properties["custom_font"] = font.toString()
                 self.apply_font(font)
-                
+
         elif action == res_act:
-            w, ok1 = QInputDialog.getInt(self, t("width_dialog_title"), t("width_dialog_prompt"), self.width())
-            h, ok2 = QInputDialog.getInt(self, t("height_dialog_title"), t("height_dialog_prompt"), self.height())
-            if ok1 and ok2: 
-                self.resize(w, h)
-                self.update_relative_geometry()
+            self.resize_widget()
+
         elif action == del_act:
-            self.deleteLater() # Safely destroys the widget and cleans up memory
+            self.delete_widget()
 
     def apply_font(self, font):
         """ Can be deeply overridden by specific UI widgets to hook onto child QText layers purely. """
