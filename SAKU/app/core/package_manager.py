@@ -11,21 +11,58 @@ from app.widgets import (
 
 BASE_PROJECT_DIR = "user_workspaces"
 
-def save_window(win_id, canvas):
-    if not os.path.exists(BASE_PROJECT_DIR): 
-        os.makedirs(BASE_PROJECT_DIR, exist_ok=True)
-        
-    win_folder = os.path.join(BASE_PROJECT_DIR, win_id)
-    if not os.path.exists(win_folder): 
-        os.makedirs(win_folder, exist_ok=True)
-    
+def build_window_data(canvas, save_width=None, save_height=None):
+    """
+    Builds the JSON data of a window.
+
+    If save_width/save_height are provided, widget geometry is converted from
+    the current visible canvas size to the logical save canvas size.
+
+    This fixes the problem where widgets become smaller after saving while
+    Design Mode is open, because the sidebar makes the visible canvas smaller.
+    """
+    current_width = max(1, canvas.width())
+    current_height = max(1, canvas.height())
+
+    target_width = save_width if save_width and save_width > 0 else current_width
+    target_height = save_height if save_height and save_height > 0 else current_height
+
+    scale_x = target_width / current_width
+    scale_y = target_height / current_height
+
     data = []
+
     for c in canvas.findChildren(BaseComponent):
-        # Ignore things that are not standard widgets (like templates inside palette if any happen to leak)
-        if getattr(c, 'is_template', False): continue
-        data.append(c.to_dict())
-    
-    with open(os.path.join(win_folder, "config.json"), "w") as f:
+        if getattr(c, "is_template", False):
+            continue
+
+        item = c.to_dict()
+
+        item["x"] = int(round(item.get("x", c.x()) * scale_x))
+        item["y"] = int(round(item.get("y", c.y()) * scale_y))
+        item["width"] = max(1, int(round(item.get("width", c.width()) * scale_x)))
+        item["height"] = max(1, int(round(item.get("height", c.height()) * scale_y)))
+
+        data.append(item)
+
+    return data
+
+
+def save_window(win_id, canvas, save_width=None, save_height=None):
+    if not os.path.exists(BASE_PROJECT_DIR):
+        os.makedirs(BASE_PROJECT_DIR, exist_ok=True)
+
+    win_folder = os.path.join(BASE_PROJECT_DIR, win_id)
+    if not os.path.exists(win_folder):
+        os.makedirs(win_folder, exist_ok=True)
+
+    data = build_window_data(
+        canvas,
+        save_width=save_width,
+        save_height=save_height
+    )
+
+    with open(os.path.join(win_folder, "config.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
 def load_window(win_id, canvas):

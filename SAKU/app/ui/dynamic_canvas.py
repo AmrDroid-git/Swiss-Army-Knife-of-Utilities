@@ -2,7 +2,7 @@ import os
 import json
 from PySide6.QtWidgets import (
     QFrame, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QScrollArea, QApplication
+    QScrollArea, QApplication, QMessageBox
 )
 from PySide6.QtCore import Qt, QTimer
 from app.widgets import (
@@ -177,6 +177,7 @@ class CustomWindow(QWidget):
 
         self._project_loaded_once = False
         self._window_state_restored = False
+        self._last_saved_project_snapshot = None
 
         screen = QApplication.primaryScreen().geometry()
         window_width = int(screen.width() * 0.7)
@@ -250,6 +251,64 @@ class CustomWindow(QWidget):
         base_dir = os.path.join(package_manager.BASE_PROJECT_DIR, self.window_id)
         os.makedirs(base_dir, exist_ok=True)
         return os.path.join(base_dir, "window_state.json")
+    
+    def _get_logical_save_canvas_size(self):
+        """
+        Returns the canvas size that should be used when saving.
+
+        In Design Mode, the sidebar is visible and makes the real canvas smaller.
+        But saved widget geometry should be based on the full canvas size,
+        otherwise widgets become smaller after reopening the workspace.
+        """
+        canvas_width = max(1, self.canvas.width())
+        canvas_height = max(1, self.canvas.height())
+
+        if self.edit_btn.isChecked() and self.sidebar_container.isVisible():
+            spacing = self.content.spacing()
+            if spacing < 0:
+                spacing = 6
+
+            logical_width = canvas_width + self.sidebar_container.width() + spacing
+            return logical_width, canvas_height
+
+        return canvas_width, canvas_height
+    
+    def _get_project_snapshot(self):
+        """Returns a stable JSON snapshot of the logical saved canvas state."""
+        save_width, save_height = self._get_logical_save_canvas_size()
+
+        data = package_manager.build_window_data(
+            self.canvas,
+            save_width=save_width,
+            save_height=save_height
+        )
+
+        data.sort(
+            key=lambda item: json.dumps(
+                item,
+                sort_keys=True,
+                ensure_ascii=False
+            )
+        )
+
+        return json.dumps(data, sort_keys=True, ensure_ascii=False)
+
+    def _mark_project_as_saved(self):
+        """Stores the latest saved canvas snapshot in memory."""
+        self._last_saved_project_snapshot = self._get_project_snapshot()
+
+    def _has_unsaved_project_changes(self):
+        """Checks if the current canvas is different from the last saved version."""
+        if self._last_saved_project_snapshot is None:
+            return False
+
+        return self._get_project_snapshot() != self._last_saved_project_snapshot
+
+    def _enable_edit_mode_after_cancel_close(self):
+        """Cancel closing and return the user to edit mode."""
+        self.edit_btn.setChecked(True)
+        self.canvas.set_edit_mode(True)
+        self.sidebar_container.show()
 
     def _save_window_state(self):
         try:
@@ -320,6 +379,7 @@ class CustomWindow(QWidget):
         finally:
             self.canvas.set_loading_state(False)
             QTimer.singleShot(0, self.canvas._refresh_relative_geometry_for_all_widgets)
+            QTimer.singleShot(0, self._mark_project_as_saved)
 
     def _reconnect_loaded_widgets(self):
         for c in self.canvas.findChildren(BaseComponent):
@@ -347,15 +407,78 @@ class CustomWindow(QWidget):
         self.sidebar_container.setVisible(state)
 
     def save_project(self):
-        self.canvas._refresh_relative_geometry_for_all_widgets()
-        package_manager.save_window(self.window_id, self.canvas)
+        save_width, save_height = self._get_logical_save_canvas_size()
+
+        package_manager.save_window(
+            self.window_id,
+            self.canvas,
+            save_width=save_width,
+            save_height=save_height
+        )
+
+        if hasattr(self, "_mark_project_as_saved"):
+            self._mark_project_as_saved()
 
     def closeEvent(self, event):
+        if self._has_unsaved_project_changes():
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowTitle(t("unsaved_changes_title", "Unsaved changes"))
+            msg.setText(t("unsaved_changes_message", "You have unsaved changes in this window."))
+            msg.setInformativeText(
+                t(
+                    "unsaved_changes_question",
+                    "Do you want to save before quitting, go back to edit mode, or quit without saving?"
+                )
+            )
+
+            save_quit_btn = msg.addButton(
+                t("save_and_quit", "Save & Quit"),
+                QMessageBox.AcceptRole
+            )
+            back_edit_btn = msg.addButton(
+                t("back_to_edit_mode", "Back to edit mode"),
+                QMessageBox.RejectRole
+            )
+            quit_btn = msg.addButton(
+                t("quit_without_saving", "Quit"),
+                QMessageBox.DestructiveRole
+            )
+
+            msg.setDefaultButton(save_quit_btn)
+            msg.setEscapeButton(back_edit_btn)
+            msg.exec()
+
+            clicked_button = msg.clickedButton()
+
+            if clicked_button == back_edit_btn:
+                self._enable_edit_mode_after_cancel_close()
+                event.ignore()
+                return
+
+            if clicked_button == save_quit_btn:
+                try:
+                    self.save_project()
+                except Exception as e:
+                    QMessageBox.critical(
+                        self,
+                        t("error", "Error"),
+                        f"Could not save the project:\n{e}"
+                    )
+                    event.ignore()
+                    return
+
+            elif clicked_button == quit_btn:
+                pass
+
+            else:
+                event.ignore()
+                return
+
         self.engine.kill()
 
         try:
             self._save_window_state()
-            self.save_project()
         except Exception as e:
             print(f"Error during close save: {e}")
 

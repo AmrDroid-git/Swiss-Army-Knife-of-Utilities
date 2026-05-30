@@ -7,7 +7,7 @@
         },
         {
             "name": "DOWNLOADERS",
-            "expanded": false,
+            "expanded": true,
             "windows": [
                 "yt"
             ]

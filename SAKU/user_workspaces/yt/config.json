@@ -1,10 +1,10 @@
 [
     {
         "comp_type": "widget_button",
-        "x": 52,
-        "y": 178,
-        "width": 40,
-        "height": 42,
+        "x": 184,
+        "y": 147,
+        "width": 376,
+        "height": 53,
         "arg_order": 0,
         "properties": {},
         "label": "Run Script",
@@ -15,9 +15,9 @@
     },
     {
         "comp_type": "widget_i_file_link",
-        "x": 26,
-        "y": 55,
-        "width": 96,
+        "x": 43,
+        "y": 47,
+        "width": 600,
         "height": 42,
         "arg_order": 0,
         "properties": {},
@@ -25,9 +25,9 @@
     },
     {
         "comp_type": "widget_requirements_link",
-        "x": 6,
+        "x": 0,
         "y": 505,
-        "width": 40,
+        "width": 59,
         "height": 21,
         "arg_order": 0,
         "properties": {},
@@ -38,9 +38,9 @@
     },
     {
         "comp_type": "widget_interactive_console",
-        "x": 24,
-        "y": 273,
-        "width": 383,
+        "x": 6,
+        "y": 246,
+        "width": 746,
         "height": 187,
         "arg_order": 0,
         "properties": {}
