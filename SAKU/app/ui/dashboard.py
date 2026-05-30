@@ -403,12 +403,104 @@ class Dashboard(QMainWindow):
                 QMessageBox.warning(self, t("error"), t("could_not_rename_group"))
     
     def delete_group(self, group_name):
-        """Delete a group (moves windows to Ungrouped)."""
-        reply = QMessageBox.question(self, t("confirm_deletion"), 
-                                     t("are_you_sure_delete_group"))
-        if reply == QMessageBox.Yes:
-            group_manager.delete_group(group_name)
+        """
+        Delete a group with correct handling for groups containing windows.
+
+        Behavior:
+        - Empty group: ask Yes/No, then delete only the group.
+        - Group with windows: user chooses between deleting windows too,
+          moving windows to Ungrouped, or cancelling.
+        - Ungrouped can be deleted. If it contains windows, the only safe
+          deletion option is deleting its windows too, because moving them to
+          Ungrouped would recreate the same group.
+        """
+        windows = group_manager.get_group_windows(group_name)
+        window_count = len(windows)
+
+        # Case 1: empty group, including empty Ungrouped
+        if window_count == 0:
+            reply = QMessageBox.question(
+                self,
+                t("confirm_deletion"),
+                t("delete_empty_group_confirm", "Delete this group?"),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                group_manager.delete_group(group_name, move_windows_to_ungrouped=False)
+                self.refresh()
+            return
+
+        # Case 2: Ungrouped contains windows.
+        # We cannot move its windows to Ungrouped, so only delete or cancel.
+        if group_name == group_manager.UNGROUPED_GROUP_NAME:
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowTitle(t("confirm_deletion"))
+            msg.setText(t("group_contains_windows", "This group contains windows.").format(
+                group_name=group_name,
+                count=window_count
+            ))
+            msg.setInformativeText(t(
+                "delete_ungrouped_with_windows_confirm",
+                "Deleting this group will also delete its windows. Continue?"
+            ))
+
+            delete_btn = msg.addButton(
+                t("delete_group_and_windows", "Delete group and windows"),
+                QMessageBox.DestructiveRole
+            )
+            msg.addButton(t("cancel", "Cancel"), QMessageBox.RejectRole)
+            msg.exec()
+
+            if msg.clickedButton() == delete_btn:
+                self.delete_group_windows_from_disk(windows)
+                group_manager.delete_group(group_name, move_windows_to_ungrouped=False)
+                self.refresh()
+            return
+
+        # Case 3: normal group contains windows.
+        # Let the user choose: delete windows too, move to Ungrouped, or cancel.
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle(t("confirm_deletion"))
+        msg.setText(t("group_contains_windows", "This group contains windows.").format(
+            group_name=group_name,
+            count=window_count
+        ))
+        msg.setInformativeText(t(
+            "delete_group_with_windows_choice",
+            "Choose what to do with the windows inside this group."
+        ))
+
+        delete_btn = msg.addButton(
+            t("delete_group_and_windows", "Delete group and windows"),
+            QMessageBox.DestructiveRole
+        )
+        move_btn = msg.addButton(
+            t("move_windows_to_ungrouped", "Move windows to Ungrouped"),
+            QMessageBox.ActionRole
+        )
+        msg.addButton(t("cancel", "Cancel"), QMessageBox.RejectRole)
+        msg.exec()
+
+        clicked = msg.clickedButton()
+
+        if clicked == delete_btn:
+            self.delete_group_windows_from_disk(windows)
+            group_manager.delete_group(group_name, move_windows_to_ungrouped=False)
             self.refresh()
+        elif clicked == move_btn:
+            group_manager.delete_group(group_name, move_windows_to_ungrouped=True)
+            self.refresh()
+
+    def delete_group_windows_from_disk(self, windows):
+        """Delete many window folders from disk and remove them from all groups."""
+        for window_id in windows:
+            win_folder = os.path.join(package_manager.BASE_PROJECT_DIR, window_id)
+            if os.path.exists(win_folder):
+                shutil.rmtree(win_folder)
+            group_manager.remove_window_from_groups(window_id)
     
     def delete_window(self, window_id):
         """Delete a window."""

@@ -3,13 +3,8 @@
         {
             "name": "Ungrouped",
             "expanded": false,
-            "windows": []
-        },
-        {
-            "name": "DOWNLOADERS",
-            "expanded": true,
             "windows": [
-                "yt"
+                "t"
             ]
         }
     ]

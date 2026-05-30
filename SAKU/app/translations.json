@@ -172,7 +172,14 @@
       "leave_edit_mode_question": "Do you want to save before leaving Design Mode?",
       "save_and_exit_edit_mode": "Save and leave edit mode",
       "leave_without_saving": "Leave without saving",
-      "stay_in_edit_mode": "Stay in edit mode"
+      "stay_in_edit_mode": "Stay in edit mode",
+      "cancel": "Cancel",
+      "delete_empty_group_confirm": "Delete this group?",
+      "group_contains_windows": "Group {group_name} contains {count} window(s).",
+      "delete_ungrouped_with_windows_confirm": "Deleting Ungrouped will also delete its windows because they cannot be moved to the same group.",
+      "delete_group_with_windows_choice": "Choose what to do with the windows inside this group.",
+      "delete_group_and_windows": "Delete group and windows",
+      "move_windows_to_ungrouped": "Move windows to Ungrouped"
     },
     "fr": {
       "file": "Fichier",
@@ -333,7 +340,14 @@
       "leave_edit_mode_question": "Voulez-vous enregistrer avant de quitter le mode modification ?",
       "save_and_exit_edit_mode": "Enregistrer et quitter le mode modification",
       "leave_without_saving": "Quitter sans enregistrer",
-      "stay_in_edit_mode": "Rester en mode modification"
+      "stay_in_edit_mode": "Rester en mode modification",
+      "cancel": "Annuler",
+      "delete_empty_group_confirm": "Supprimer ce groupe ?",
+      "group_contains_windows": "Le groupe {group_name} contient {count} fenêtre(s).",
+      "delete_ungrouped_with_windows_confirm": "La suppression de Ungrouped supprimera aussi ses fenêtres, car elles ne peuvent pas être déplacées vers le même groupe.",
+      "delete_group_with_windows_choice": "Choisissez quoi faire avec les fenêtres dans ce groupe.",
+      "delete_group_and_windows": "Supprimer le groupe et les fenêtres",
+      "move_windows_to_ungrouped": "Déplacer les fenêtres vers Ungrouped"
     },
     "ar": {
       "file": "ملف",
@@ -494,7 +508,14 @@
       "leave_edit_mode_question": "هل تريد الحفظ قبل مغادرة وضع التعديل؟",
       "save_and_exit_edit_mode": "حفظ ومغادرة وضع التعديل",
       "leave_without_saving": "مغادرة بدون حفظ",
-      "stay_in_edit_mode": "البقاء في وضع التعديل"
+      "stay_in_edit_mode": "البقاء في وضع التعديل",
+      "cancel": "إلغاء",
+      "delete_empty_group_confirm": "هل تريد حذف هذه المجموعة؟",
+      "group_contains_windows": "المجموعة {group_name} تحتوي على {count} نافذة.",
+      "delete_ungrouped_with_windows_confirm": "حذف Ungrouped سيحذف النوافذ الموجودة داخله أيضاً لأنها لا يمكن نقلها إلى نفس المجموعة.",
+      "delete_group_with_windows_choice": "اختر ماذا تريد أن تفعل بالنوافذ داخل هذه المجموعة.",
+      "delete_group_and_windows": "حذف المجموعة والنوافذ",
+      "move_windows_to_ungrouped": "نقل النوافذ إلى Ungrouped"
     }
   }
 }
