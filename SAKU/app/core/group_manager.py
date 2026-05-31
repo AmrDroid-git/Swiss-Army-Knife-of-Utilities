@@ -210,11 +210,37 @@ def organize_ungrouped_windows():
     Add windows that exist on disk but are not assigned to any group.
 
     Important: Ungrouped is created only if such windows exist.
-    This allows the user to delete the Ungrouped group when it is empty.
+    This also cleans old invalid window names such as arithmetic_+-*/
+    so Windows path creation does not crash with WinError 123.
     """
     from app.core import package_manager
 
     groups_data = load_groups()
+
+    # First, sanitize already saved window ids inside groups.json.
+    for group in groups_data.get("groups", []):
+        cleaned_windows = []
+
+        for window in group.get("windows", []):
+            safe_window = package_manager.sanitize_window_id(window)
+
+            if not safe_window:
+                continue
+
+            if safe_window != window:
+                try:
+                    old_folder = os.path.join(package_manager.BASE_PROJECT_DIR, window)
+                    new_folder = package_manager.get_window_folder(safe_window)
+
+                    if os.path.isdir(old_folder) and not os.path.exists(new_folder):
+                        os.rename(old_folder, new_folder)
+                except Exception:
+                    pass
+
+            if safe_window not in cleaned_windows:
+                cleaned_windows.append(safe_window)
+
+        group["windows"] = cleaned_windows
 
     # Get all windows on disk
     if os.path.exists(package_manager.BASE_PROJECT_DIR):
@@ -239,7 +265,5 @@ def organize_ungrouped_windows():
         for window in ungrouped:
             if window not in ungrouped_group.get("windows", []):
                 ungrouped_group["windows"].append(window)
-        save_groups(groups_data)
-    else:
-        # Save only to normalize a broken/missing file, without recreating Ungrouped.
-        save_groups(groups_data)
+
+    save_groups(groups_data)

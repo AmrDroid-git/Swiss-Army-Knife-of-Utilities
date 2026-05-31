@@ -260,6 +260,27 @@ class Dashboard(QMainWindow):
                 return data[1]
         return None
 
+    def _make_unique_window_name(self, preferred_name):
+        """Create a safe and unique window id from user input."""
+        base_name = package_manager.sanitize_window_id(preferred_name)
+        candidate = base_name
+        counter = 2
+
+        groups_data = group_manager.load_groups()
+        existing_windows = set()
+
+        for group in groups_data.get("groups", []):
+            existing_windows.update(group.get("windows", []))
+
+        while (
+            candidate in existing_windows
+            or os.path.exists(package_manager.get_window_folder(candidate))
+        ):
+            candidate = f"{base_name}_{counter}"
+            counter += 1
+
+        return candidate
+
     def edit_selected_group(self):
         """Rename selected group."""
         group_name = self.get_selected_group()
@@ -295,7 +316,7 @@ class Dashboard(QMainWindow):
     def new_win(self):
         n, ok = QInputDialog.getText(self, t("new_workspace"), t("enter_window_name"))
         if ok and n:
-            n = n.replace(" ", "_")  # Safety escaping
+            n = self._make_unique_window_name(n)
             # Add to Ungrouped by default
             group_manager.add_window_to_group(n, "Ungrouped")
             w = CustomWindow(n)
@@ -318,7 +339,7 @@ class Dashboard(QMainWindow):
         
         n, ok = QInputDialog.getText(self, t("import_workspace"), t("choose_name"))
         if ok and n:
-            n = n.replace(" ", "_")
+            n = self._make_unique_window_name(n)
             try:
                 package_manager.import_window(path, n)
                 # Add to Ungrouped by default
@@ -606,7 +627,7 @@ class Dashboard(QMainWindow):
         """Create a new window and add it to specified group."""
         n, ok = QInputDialog.getText(self, t("new_workspace"), t("enter_window_name"))
         if ok and n:
-            n = n.replace(" ", "_")
+            n = self._make_unique_window_name(n)
             group_manager.add_window_to_group(n, group_name)
             w = CustomWindow(n)
             w.show()
@@ -627,7 +648,7 @@ class Dashboard(QMainWindow):
     def export_group(self, group_name):
         """Export a group and all its windows to ZIP."""
         window_ids = group_manager.get_group_windows(group_name)
-        safe_group_name = group_name.replace(" ", "_")
+        safe_group_name = package_manager.sanitize_window_id(group_name)
 
         dest, _ = QFileDialog.getSaveFileName(
             self,

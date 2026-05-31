@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import tempfile
+import re
 from PySide6.QtCore import QPoint
 from app.widgets import (
     BaseComponent, WidgetButton, WidgetIText, WidgetOText,
@@ -11,6 +12,48 @@ from app.widgets import (
 )
 
 BASE_PROJECT_DIR = "user_workspaces"
+
+WINDOW_RESERVED_NAMES = {
+    "CON", "PRN", "AUX", "NUL",
+    "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+    "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+}
+
+
+def sanitize_window_id(raw_name):
+    """Return a Windows-safe folder name for a workspace/window."""
+    name = str(raw_name or "").strip()
+    name = name.replace(" ", "_")
+    name = re.sub(r'[<>:"/\\|?*]', "_", name)
+    name = re.sub(r"_+", "_", name)
+    name = name.strip(" ._")
+
+    if not name:
+        name = "Untitled_Window"
+
+    if name.upper() in WINDOW_RESERVED_NAMES:
+        name = f"{name}_window"
+
+    return name
+
+
+def get_window_folder(win_id):
+    """Return the filesystem folder of a window using a safe folder name."""
+    return os.path.join(BASE_PROJECT_DIR, sanitize_window_id(win_id))
+
+
+def make_unique_window_id(preferred_win_id):
+    """Return a safe window id that does not already exist on disk."""
+    base_name = sanitize_window_id(preferred_win_id)
+    candidate = base_name
+    counter = 2
+
+    while os.path.exists(get_window_folder(candidate)):
+        candidate = f"{base_name}_{counter}"
+        counter += 1
+
+    return candidate
+
 
 def build_window_data(canvas, save_width=None, save_height=None):
     """
@@ -53,7 +96,9 @@ def save_window(win_id, canvas, save_width=None, save_height=None):
     if not os.path.exists(BASE_PROJECT_DIR):
         os.makedirs(BASE_PROJECT_DIR, exist_ok=True)
 
-    win_folder = os.path.join(BASE_PROJECT_DIR, win_id)
+    safe_win_id = sanitize_window_id(win_id)
+    win_folder = get_window_folder(safe_win_id)
+
     if not os.path.exists(win_folder):
         os.makedirs(win_folder, exist_ok=True)
 
@@ -65,6 +110,8 @@ def save_window(win_id, canvas, save_width=None, save_height=None):
 
     with open(os.path.join(win_folder, "config.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
+
+    return safe_win_id
 
 def clear_canvas(canvas):
     """Remove all real widgets from the canvas without touching toolbox templates."""
@@ -123,7 +170,7 @@ def load_window_data(data, canvas, edit_mode=False):
 
 
 def load_window(win_id, canvas):
-    path = os.path.join(BASE_PROJECT_DIR, win_id, "config.json")
+    path = os.path.join(get_window_folder(win_id), "config.json")
     if not os.path.exists(path):
         return
 
@@ -137,39 +184,32 @@ def load_window(win_id, canvas):
     load_window_data(data, canvas, edit_mode=False)
 
 def export_window(win_id, output_zip_path):
-    """ Compresses an entire window bundle securely into a .zip file. """
-    win_folder = os.path.join(BASE_PROJECT_DIR, win_id)
+    """Compresses an entire window bundle securely into a .zip file."""
+    win_folder = get_window_folder(win_id)
+
     if not os.path.exists(win_folder):
         raise FileNotFoundError("Window bundle does not exist on disk.")
-    
-    # shutil.make_archive adds the .zip extension automatically
+
     base_name = os.path.splitext(output_zip_path)[0]
-    shutil.make_archive(base_name, 'zip', win_folder)
+    shutil.make_archive(base_name, "zip", win_folder)
 
 def import_window(zip_path, new_win_id):
-    """ Decompresses an imported .zip bundle straight into the live project directory. """
-    win_folder = os.path.join(BASE_PROJECT_DIR, new_win_id)
+    """Decompresses an imported .zip bundle straight into the live project directory."""
+    safe_win_id = sanitize_window_id(new_win_id)
+    win_folder = get_window_folder(safe_win_id)
+
     if os.path.exists(win_folder):
         raise FileExistsError("A window with this exact name already exists in your workspace!")
-    
+
     os.makedirs(win_folder, exist_ok=True)
-    shutil.unpack_archive(zip_path, win_folder, 'zip')
+    shutil.unpack_archive(zip_path, win_folder, "zip")
+
+    return safe_win_id
 
 
 def _make_unique_window_id(preferred_win_id):
-    """Return a safe window id that does not already exist on disk."""
-    base_name = (preferred_win_id or "Imported_Window").strip().replace(" ", "_")
-    if not base_name:
-        base_name = "Imported_Window"
-
-    candidate = base_name
-    counter = 2
-
-    while os.path.exists(os.path.join(BASE_PROJECT_DIR, candidate)):
-        candidate = f"{base_name}_imported_{counter}"
-        counter += 1
-
-    return candidate
+    """Backward compatible alias used by older import code."""
+    return make_unique_window_id(preferred_win_id)
 
 
 def export_group(group_name, window_ids, output_zip_path):
@@ -183,13 +223,15 @@ def export_group(group_name, window_ids, output_zip_path):
         clean_window_ids = []
 
         for window_id in window_ids:
-            src_folder = os.path.join(BASE_PROJECT_DIR, window_id)
-            if not os.path.isdir(src_folder):
-                raise FileNotFoundError(f"Window '{window_id}' does not exist on disk.")
+            safe_window_id = sanitize_window_id(window_id)
+            src_folder = get_window_folder(safe_window_id)
 
-            dst_folder = os.path.join(windows_dir, window_id)
+            if not os.path.isdir(src_folder):
+                raise FileNotFoundError(f"Window '{safe_window_id}' does not exist on disk.")
+
+            dst_folder = os.path.join(windows_dir, safe_window_id)
             shutil.copytree(src_folder, dst_folder)
-            clean_window_ids.append(window_id)
+            clean_window_ids.append(safe_window_id)
 
         manifest = {
             "type": "saku_group_export",
@@ -232,8 +274,8 @@ def import_group(zip_path, new_group_name):
             if not os.path.isdir(src_folder):
                 raise FileNotFoundError(f"Missing window '{old_window_id}' in the group ZIP.")
 
-            new_window_id = _make_unique_window_id(old_window_id)
-            dst_folder = os.path.join(BASE_PROJECT_DIR, new_window_id)
+            new_window_id = make_unique_window_id(old_window_id)
+            dst_folder = get_window_folder(new_window_id)
             shutil.copytree(src_folder, dst_folder)
             imported_windows.append(new_window_id)
 

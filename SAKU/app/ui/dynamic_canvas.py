@@ -207,8 +207,8 @@ class EditorCanvas(QFrame):
 class CustomWindow(QWidget):
     def __init__(self, window_id):
         super().__init__()
-        self.window_id = window_id
-        self.setWindowTitle(f"Project Workspace: {window_id.replace('_', ' ')}")
+        self.window_id = package_manager.sanitize_window_id(window_id)
+        self.setWindowTitle(f"Project Workspace: {self.window_id.replace('_', ' ')}")
 
         self._project_loaded_once = False
         self._window_state_restored = False
@@ -238,7 +238,7 @@ class CustomWindow(QWidget):
         save_btn = QPushButton(t("save_project"))
         save_btn.clicked.connect(self.save_project)
 
-        title_label = QLabel(window_id.replace("_", " ").upper())
+        title_label = QLabel(self.window_id.replace("_", " ").upper())
         title_label.setStyleSheet("font-size: 16px; font-weight: bold; padding: 4px 0px;")
 
         nav.addWidget(title_label)
@@ -286,7 +286,7 @@ class CustomWindow(QWidget):
         self._restore_window_state()
 
     def _get_window_state_file(self):
-        base_dir = os.path.join(package_manager.BASE_PROJECT_DIR, self.window_id)
+        base_dir = package_manager.get_window_folder(self.window_id)
         os.makedirs(base_dir, exist_ok=True)
         return os.path.join(base_dir, "window_state.json")
     
