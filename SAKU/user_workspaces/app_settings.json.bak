@@ -2,10 +2,10 @@
     "dashboard": {
         "zoom": 150,
         "geometry": {
-            "x": 378,
-            "y": 15,
-            "width": 700,
-            "height": 686
+            "x": 814,
+            "y": 123,
+            "width": 600,
+            "height": 586
         }
     },
     "theme": "white"
