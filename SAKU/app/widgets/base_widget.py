@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QInputDialog
+from PySide6.QtWidgets import QWidget, QInputDialog, QColorDialog
 from PySide6.QtCore import Qt, QPoint
 from app.translator import t
 
@@ -198,10 +198,11 @@ class BaseComponent(QWidget):
     def add_base_actions(self, menu, include_font=True):
         """
         Appends standard actions to any widget right-click menu.
-        Some widgets, like consoles, do not need font editing, so include_font can be False.
+        Some widgets, like consoles, do not need font/color editing, so include_font can be False.
         """
         menu.addSeparator()
         font_act = menu.addAction(t("change_font")) if include_font else None
+        self._base_color_act = menu.addAction(t("change_color", "Change Text Color")) if include_font else None
         resize_act = menu.addAction(t("resize"))
         delete_act = menu.addAction(t("delete"))
         return font_act, resize_act, delete_act
@@ -271,6 +272,21 @@ class BaseComponent(QWidget):
                 self.properties["custom_font"] = font.toString()
                 self.apply_font(font)
 
+        color_act = getattr(self, "_base_color_act", None)
+        if color_act is not None and action == color_act:
+            from PySide6.QtGui import QColor
+
+            current_color = QColor(self.properties.get("custom_color", "#000000"))
+            color = QColorDialog.getColor(
+                current_color,
+                self,
+                t("select_text_color", "Select Text Color")
+            )
+
+            if color.isValid():
+                self.properties["custom_color"] = color.name()
+                self.apply_color(color.name())
+
         elif action == res_act:
             self.resize_widget()
 
@@ -303,6 +319,8 @@ class BaseComponent(QWidget):
         if font.strikeOut():
             decorations.append("line-through")
         decoration = " ".join(decorations) if decorations else "none"
+        color = self.properties.get("custom_color")
+        color_rule = f"color: {color}; " if color else ""
 
         return (
             f'{selector} {{ '
@@ -311,12 +329,41 @@ class BaseComponent(QWidget):
             f'font-weight: {weight}; '
             f'font-style: {style}; '
             f'text-decoration: {decoration}; '
+            f'{color_rule}'
             f'}}'
         )
 
     def _apply_font_to_widget(self, widget, font, selector):
         widget.setFont(font)
         widget.setStyleSheet(self._font_qss(selector, font))
+
+    def _style_target_widgets(self):
+        """Return child widgets that can receive per-widget font/color styling."""
+        supported_selectors = {
+            "QLabel",
+            "QPushButton",
+            "QLineEdit",
+            "QComboBox",
+        }
+
+        targets = []
+        for child in self.findChildren(QWidget):
+            if child is self:
+                continue
+
+            selector = child.metaObject().className()
+            if selector in supported_selectors:
+                targets.append((child, selector))
+
+        return targets
+
+    def _apply_color_to_widget(self, widget, selector):
+        widget.setStyleSheet(self._font_qss(selector, widget.font()))
+
+    def apply_color(self, color):
+        """Apply the selected text color only to this component's inner widgets."""
+        for widget, selector in self._style_target_widgets():
+            self._apply_color_to_widget(widget, selector)
 
     def apply_font(self, font):
         """Apply the selected font to this component and its child widgets."""
@@ -352,6 +399,9 @@ class BaseComponent(QWidget):
             success = f.fromString(self.properties["custom_font"])
             if success:
                 self.apply_font(f)
+
+        if "custom_color" in self.properties:
+            self.apply_color(self.properties["custom_color"])
         
         # Schedule geometric scale mapping softly on load
         from PySide6.QtCore import QTimer
