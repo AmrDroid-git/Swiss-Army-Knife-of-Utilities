@@ -4,4 +4,8 @@ __pycache__/
 # Ignore the local projects directory
 projects/
 
+# Ignore the full content of the workspace
 SAKU/user_workspaces/*
+
+# Keep this specific hidden file so Git tracks the folder
+!SAKU/user_workspaces/.gitkeep
