@@ -188,7 +188,10 @@
       "import_group": "Import Group",
       "choose_group_name": "Choose a name for the group:",
       "group_imported_success": "Group imported successfully!",
-      "group_exported_success": "Group exported successfully!"
+      "group_exported_success": "Group exported successfully!",
+      "rename_window": "Rename Window",
+      "rename_window_title": "Rename Window",
+      "could_not_rename_window": "Could not rename window"
     },
     "fr": {
       "file": "Fichier",
@@ -365,7 +368,10 @@
       "import_group": "Importer un groupe",
       "choose_group_name": "Choisissez un nom pour le groupe :",
       "group_imported_success": "Groupe importé avec succès !",
-      "group_exported_success": "Groupe exporté avec succès !"
+      "group_exported_success": "Groupe exporté avec succès !",
+      "rename_window": "Renommer la fenêtre",
+      "rename_window_title": "Renommer la fenêtre",
+      "could_not_rename_window": "Impossible de renommer la fenêtre"
     },
     "ar": {
       "file": "ملف",
@@ -542,7 +548,10 @@
       "import_group": "استيراد مجموعة",
       "choose_group_name": "اختر اسماً للمجموعة:",
       "group_imported_success": "تم استيراد المجموعة بنجاح!",
-      "group_exported_success": "تم تصدير المجموعة بنجاح!"
+      "group_exported_success": "تم تصدير المجموعة بنجاح!",
+      "rename_window": "إعادة تسمية النافذة",
+      "rename_window_title": "إعادة تسمية النافذة",
+      "could_not_rename_window": "تعذر إعادة تسمية النافذة"
     }
   }
 }

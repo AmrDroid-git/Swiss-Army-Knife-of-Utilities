@@ -207,8 +207,13 @@ class EditorCanvas(QFrame):
 class CustomWindow(QWidget):
     def __init__(self, window_id):
         super().__init__()
-        self.window_id = package_manager.sanitize_window_id(window_id)
-        self.setWindowTitle(f"Project Workspace: {self.window_id.replace('_', ' ')}")
+        if package_manager.is_window_id(window_id):
+            self.window_id = window_id
+        else:
+            self.window_id = package_manager.migrate_legacy_window(window_id)
+
+        self.window_name = package_manager.get_window_name(self.window_id)
+        self.setWindowTitle(f"Project Workspace: {self.window_name}")
 
         self._project_loaded_once = False
         self._window_state_restored = False
@@ -238,10 +243,10 @@ class CustomWindow(QWidget):
         save_btn = QPushButton(t("save_project"))
         save_btn.clicked.connect(self.save_project)
 
-        title_label = QLabel(self.window_id.replace("_", " ").upper())
-        title_label.setStyleSheet("font-size: 16px; font-weight: bold; padding: 4px 0px;")
+        self.title_label = QLabel(self.window_name.upper())
+        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; padding: 4px 0px;")
 
-        nav.addWidget(title_label)
+        nav.addWidget(self.title_label)
         nav.addStretch()
         nav.addWidget(self.edit_label)
         nav.addWidget(self.edit_btn)

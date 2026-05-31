@@ -1,6 +1,8 @@
 """
 Group Manager: Handles organizing windows into collapsible groups.
-Groups are stored in a JSON file for UI-only organization (no backend changes).
+Groups are stored in a JSON file for UI-only organization.
+
+Important: groups store internal window ids, not visible window names.
 """
 
 import copy
@@ -11,8 +13,6 @@ from app.core.package_manager import BASE_PROJECT_DIR
 GROUPS_FILE = os.path.join(BASE_PROJECT_DIR, "groups.json")
 UNGROUPED_GROUP_NAME = "Ungrouped"
 
-# Important: Ungrouped is NOT a permanent group anymore.
-# It will be created only when a window really has no group.
 DEFAULT_GROUPS = {
     "groups": []
 }
@@ -44,12 +44,13 @@ def save_groups(data):
     os.makedirs(BASE_PROJECT_DIR, exist_ok=True)
 
     with open(GROUPS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
 
 def _ensure_group_in_data(groups_data, group_name):
     """Ensure a group exists inside an already loaded groups structure."""
     groups = groups_data.setdefault("groups", [])
+
     for group in groups:
         if group.get("name") == group_name:
             group.setdefault("expanded", True)
@@ -69,22 +70,26 @@ def ensure_group_exists(group_name=UNGROUPED_GROUP_NAME):
     """Create the group if it is missing and save the groups file."""
     groups_data = load_groups()
     _, created = _ensure_group_in_data(groups_data, group_name)
+
     if created:
         save_groups(groups_data)
+
     return True
 
 
 def get_group_windows(group_name):
-    """Return a copy of the window list of a group."""
+    """Return a copy of the window id list of a group."""
     groups_data = load_groups()
+
     for group in groups_data.get("groups", []):
         if group.get("name") == group_name:
             return list(group.get("windows", []))
+
     return []
 
 
 def get_all_windows_in_groups():
-    """Get a flat list of all window IDs across all groups."""
+    """Get a flat list of all window ids across all groups."""
     groups_data = load_groups()
     windows = []
 
@@ -95,11 +100,10 @@ def get_all_windows_in_groups():
 
 
 def add_window_to_group(window_id, group_name):
-    """Add a window to a specific group, creating that group if needed."""
+    """Add a window id to a specific group, creating that group if needed."""
     groups_data = load_groups()
     target_group, _ = _ensure_group_in_data(groups_data, group_name)
 
-    # Remove window from all groups first
     for group in groups_data.get("groups", []):
         if window_id in group.get("windows", []):
             group["windows"].remove(window_id)
@@ -126,6 +130,7 @@ def create_group(group_name):
     """Create a new group."""
     groups_data = load_groups()
     _, created = _ensure_group_in_data(groups_data, group_name)
+
     if not created:
         return False
 
@@ -137,7 +142,7 @@ def delete_group(group_name, move_windows_to_ungrouped=False):
     """
     Delete a group.
 
-    If move_windows_to_ungrouped=True, the windows from the deleted group are moved
+    If move_windows_to_ungrouped=True, windows from the deleted group are moved
     to the Ungrouped group. This is ignored when deleting Ungrouped itself.
     """
     groups_data = load_groups()
@@ -154,15 +159,14 @@ def delete_group(group_name, move_windows_to_ungrouped=False):
     group_to_delete = groups_data["groups"][delete_idx]
     windows_to_move = list(group_to_delete.get("windows", []))
 
-    # Remove the group first so deleting Ungrouped is allowed.
     groups_data["groups"].pop(delete_idx)
 
-    # Optional behavior: keep the windows by moving them to Ungrouped.
     if move_windows_to_ungrouped and windows_to_move and group_name != UNGROUPED_GROUP_NAME:
         ungrouped_group, _ = _ensure_group_in_data(groups_data, UNGROUPED_GROUP_NAME)
-        for window in windows_to_move:
-            if window not in ungrouped_group.get("windows", []):
-                ungrouped_group["windows"].append(window)
+
+        for window_id in windows_to_move:
+            if window_id not in ungrouped_group.get("windows", []):
+                ungrouped_group["windows"].append(window_id)
 
     save_groups(groups_data)
     return True
@@ -205,65 +209,72 @@ def get_group_for_window(window_id):
     return None
 
 
+def migrate_groups_to_window_ids():
+    """
+    Convert old groups.json entries from visible names to internal window ids.
+
+    This fixes names like arithmetic_+-*/ because groups will no longer store
+    that text as a filesystem folder name.
+    """
+    from app.core import package_manager
+
+    groups_data = load_groups()
+    changed = False
+
+    for group in groups_data.get("groups", []):
+        migrated_windows = []
+
+        for old_ref in group.get("windows", []):
+            if package_manager.is_window_id(old_ref):
+                package_manager.ensure_window_metadata(old_ref)
+                window_id = old_ref
+            else:
+                window_id = package_manager.migrate_legacy_window(old_ref)
+                changed = True
+
+            if window_id not in migrated_windows:
+                migrated_windows.append(window_id)
+
+        if group.get("windows", []) != migrated_windows:
+            group["windows"] = migrated_windows
+            changed = True
+
+    if changed:
+        save_groups(groups_data)
+
+    return groups_data
+
+
 def organize_ungrouped_windows():
     """
     Add windows that exist on disk but are not assigned to any group.
 
     Important: Ungrouped is created only if such windows exist.
-    This also cleans old invalid window names such as arithmetic_+-*/
-    so Windows path creation does not crash with WinError 123.
     """
     from app.core import package_manager
 
-    groups_data = load_groups()
+    groups_data = migrate_groups_to_window_ids()
+    disk_windows = package_manager.list_window_ids()
 
-    # First, sanitize already saved window ids inside groups.json.
-    for group in groups_data.get("groups", []):
-        cleaned_windows = []
-
-        for window in group.get("windows", []):
-            safe_window = package_manager.sanitize_window_id(window)
-
-            if not safe_window:
-                continue
-
-            if safe_window != window:
-                try:
-                    old_folder = os.path.join(package_manager.BASE_PROJECT_DIR, window)
-                    new_folder = package_manager.get_window_folder(safe_window)
-
-                    if os.path.isdir(old_folder) and not os.path.exists(new_folder):
-                        os.rename(old_folder, new_folder)
-                except Exception:
-                    pass
-
-            if safe_window not in cleaned_windows:
-                cleaned_windows.append(safe_window)
-
-        group["windows"] = cleaned_windows
-
-    # Get all windows on disk
-    if os.path.exists(package_manager.BASE_PROJECT_DIR):
-        disk_windows = [
-            d for d in os.listdir(package_manager.BASE_PROJECT_DIR)
-            if os.path.isdir(os.path.join(package_manager.BASE_PROJECT_DIR, d))
-            and d != "groups.json"
-        ]
-    else:
-        disk_windows = []
-
-    # Get all grouped windows from the already-loaded data
     grouped_windows = []
     for group in groups_data.get("groups", []):
         grouped_windows.extend(group.get("windows", []))
 
-    # Find windows that are on disk but not inside any group
-    ungrouped = [w for w in disk_windows if w not in grouped_windows]
+    ungrouped_windows = [w for w in disk_windows if w not in grouped_windows]
 
-    if ungrouped:
+    if ungrouped_windows:
         ungrouped_group, _ = _ensure_group_in_data(groups_data, UNGROUPED_GROUP_NAME)
-        for window in ungrouped:
-            if window not in ungrouped_group.get("windows", []):
-                ungrouped_group["windows"].append(window)
+
+        for window_id in ungrouped_windows:
+            if window_id not in ungrouped_group.get("windows", []):
+                ungrouped_group["windows"].append(window_id)
+
+    groups_data["groups"] = [
+        group for group in groups_data.get("groups", [])
+        if not (
+            group.get("name") == UNGROUPED_GROUP_NAME
+            and not group.get("windows")
+        )
+    ]
 
     save_groups(groups_data)

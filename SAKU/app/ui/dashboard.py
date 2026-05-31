@@ -52,6 +52,7 @@ class Dashboard(QMainWindow):
         edit_menu.addAction(t("export_selected_group", "Export Selected Group"), self.export_selected_group)
         edit_menu.addAction(t("delete_group"), self.delete_selected_group)
         edit_menu.addSeparator()
+        edit_menu.addAction(t("rename_window", "Rename Window"), self.rename_selected_window)
         edit_menu.addAction(t("delete_window"), self.delete_selected_window)
         
         view_menu = menubar.addMenu(t("view"))
@@ -211,7 +212,8 @@ class Dashboard(QMainWindow):
             # Add windows to group
             for window_id in group_info.get("windows", []):
                 window_item = QTreeWidgetItem(group_item)
-                window_item.setText(0, f"📄 {window_id}")
+                window_name = package_manager.get_window_name(window_id)
+                window_item.setText(0, f"📄 {window_name}")
                 window_item.setData(0, Qt.UserRole, ("window", window_id))
         
         # Connect tree expansion changes
@@ -260,26 +262,9 @@ class Dashboard(QMainWindow):
                 return data[1]
         return None
 
-    def _make_unique_window_name(self, preferred_name):
-        """Create a safe and unique window id from user input."""
-        base_name = package_manager.sanitize_window_id(preferred_name)
-        candidate = base_name
-        counter = 2
-
-        groups_data = group_manager.load_groups()
-        existing_windows = set()
-
-        for group in groups_data.get("groups", []):
-            existing_windows.update(group.get("windows", []))
-
-        while (
-            candidate in existing_windows
-            or os.path.exists(package_manager.get_window_folder(candidate))
-        ):
-            candidate = f"{base_name}_{counter}"
-            counter += 1
-
-        return candidate
+    def _window_display_name(self, window_id):
+        """Return the visible name of a window id."""
+        return package_manager.get_window_name(window_id)
 
     def edit_selected_group(self):
         """Rename selected group."""
@@ -305,6 +290,14 @@ class Dashboard(QMainWindow):
             return
         self.delete_window(window_id)
 
+    def rename_selected_window(self):
+        """Rename selected window."""
+        window_id = self.get_selected_window()
+        if not window_id:
+            QMessageBox.warning(self, t("selection_required"), f"{t('please_select_window')} rename!")
+            return
+        self.rename_window(window_id)
+
     def move_selected_to_group(self):
         """Move selected window to group."""
         window_id = self.get_selected_window()
@@ -316,10 +309,10 @@ class Dashboard(QMainWindow):
     def new_win(self):
         n, ok = QInputDialog.getText(self, t("new_workspace"), t("enter_window_name"))
         if ok and n:
-            n = self._make_unique_window_name(n)
+            window_id = package_manager.create_window(n)
             # Add to Ungrouped by default
-            group_manager.add_window_to_group(n, "Ungrouped")
-            w = CustomWindow(n)
+            group_manager.add_window_to_group(window_id, "Ungrouped")
+            w = CustomWindow(window_id)
             w.show()
             self.active_windows.append(w)  # Protect from GC crash
             self.refresh()
@@ -339,11 +332,10 @@ class Dashboard(QMainWindow):
         
         n, ok = QInputDialog.getText(self, t("import_workspace"), t("choose_name"))
         if ok and n:
-            n = self._make_unique_window_name(n)
             try:
-                package_manager.import_window(path, n)
+                window_id = package_manager.import_window(path, n)
                 # Add to Ungrouped by default
-                group_manager.add_window_to_group(n, "Ungrouped")
+                group_manager.add_window_to_group(window_id, "Ungrouped")
                 QMessageBox.information(self, t("success"), f"Project {n} {t('successfully_imported')}")
                 self.refresh()
             except Exception as e:
@@ -467,6 +459,7 @@ class Dashboard(QMainWindow):
         elif item_type == "window":
             # Options for windows
             open_act = menu.addAction(t("open_window"))
+            rename_act = menu.addAction(t("rename_window", "Rename Window"))
             menu.addSeparator()
             delete_act = menu.addAction(t("delete_window"))
             menu.addSeparator()
@@ -479,6 +472,8 @@ class Dashboard(QMainWindow):
                 w = CustomWindow(item_name)
                 w.show()
                 self.active_windows.append(w)
+            elif action == rename_act:
+                self.rename_window(item_name)
             elif action == delete_act:
                 self.delete_window(item_name)
             elif action == move_act:
@@ -494,7 +489,23 @@ class Dashboard(QMainWindow):
                 self.refresh()
             else:
                 QMessageBox.warning(self, t("error"), t("could_not_rename_group"))
-    
+
+    def rename_window(self, window_id):
+        """Rename only the visible window name, not the internal folder id."""
+        old_name = package_manager.get_window_name(window_id)
+        new_name, ok = QInputDialog.getText(
+            self,
+            t("rename_window_title", "Rename Window"),
+            f"{t('new_name_for')} '{old_name}':",
+            text=old_name
+        )
+
+        if ok and new_name.strip():
+            if package_manager.rename_window(window_id, new_name.strip()):
+                self.refresh()
+            else:
+                QMessageBox.warning(self, t("error"), t("could_not_rename_window", "Could not rename window"))
+
     def delete_group(self, group_name):
         """
         Delete a group with correct handling for groups containing windows.
@@ -590,7 +601,7 @@ class Dashboard(QMainWindow):
     def delete_group_windows_from_disk(self, windows):
         """Delete many window folders from disk and remove them from all groups."""
         for window_id in windows:
-            win_folder = os.path.join(package_manager.BASE_PROJECT_DIR, window_id)
+            win_folder = package_manager.get_window_folder(window_id)
             if os.path.exists(win_folder):
                 shutil.rmtree(win_folder)
             group_manager.remove_window_from_groups(window_id)
@@ -601,7 +612,7 @@ class Dashboard(QMainWindow):
                                      t("are_you_sure_delete_window"))
         if reply == QMessageBox.Yes:
             try:
-                win_folder = os.path.join(package_manager.BASE_PROJECT_DIR, window_id)
+                win_folder = package_manager.get_window_folder(window_id)
                 if os.path.exists(win_folder):
                     shutil.rmtree(win_folder)
                 group_manager.remove_window_from_groups(window_id)
@@ -616,8 +627,9 @@ class Dashboard(QMainWindow):
         group_names = [g["name"] for g in groups_data.get("groups", [])]
         
         # Create a simple dialog to select group
+        window_name = package_manager.get_window_name(window_id)
         group_name, ok = QInputDialog.getItem(self, t("move_window_title"), 
-                                              f"{t('select_group_for')} '{window_id}':", 
+                                              f"{t('select_group_for')} '{window_name}':", 
                                               group_names, 0, False)
         if ok and group_name:
             group_manager.add_window_to_group(window_id, group_name)
@@ -627,21 +639,24 @@ class Dashboard(QMainWindow):
         """Create a new window and add it to specified group."""
         n, ok = QInputDialog.getText(self, t("new_workspace"), t("enter_window_name"))
         if ok and n:
-            n = self._make_unique_window_name(n)
-            group_manager.add_window_to_group(n, group_name)
-            w = CustomWindow(n)
+            window_id = package_manager.create_window(n)
+            group_manager.add_window_to_group(window_id, group_name)
+            w = CustomWindow(window_id)
             w.show()
             self.active_windows.append(w)
             self.refresh()
     
     def export_window(self, window_id):
         """Export a window to ZIP."""
+        window_name = package_manager.get_window_name(window_id)
+        safe_window_name = package_manager.sanitize_window_id(window_name)
+
         dest, _ = QFileDialog.getSaveFileName(self, t("export_zip"), 
-                                              window_id + "_export.zip", "Zip Files (*.zip)")
+                                              safe_window_name + "_export.zip", "Zip Files (*.zip)")
         if dest:
             try:
                 package_manager.export_window(window_id, dest)
-                QMessageBox.information(self, t("success"), f"{t('project')} '{window_id}' {t('successfully_exported')}!")
+                QMessageBox.information(self, t("success"), f"{t('project')} '{window_name}' {t('successfully_exported')}!")
             except Exception as e:
                 QMessageBox.critical(self, t("error"), f"{t('failed_to_export')}:\n{e}")
     
