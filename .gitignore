@@ -4,4 +4,4 @@ __pycache__/
 # Ignore the local projects directory
 projects/
 
-SAKU/user_workspaces/
+SAKU/user_workspaces/*
