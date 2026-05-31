@@ -65,39 +65,75 @@ def save_window(win_id, canvas, save_width=None, save_height=None):
     with open(os.path.join(win_folder, "config.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
+def clear_canvas(canvas):
+    """Remove all real widgets from the canvas without touching toolbox templates."""
+    for child in canvas.findChildren(BaseComponent):
+        if getattr(child, "is_template", False):
+            continue
+
+        child.hide()
+        child.setParent(None)
+        child.deleteLater()
+
+
+def create_widget_from_item(item, canvas):
+    """Create one widget instance from a saved config item."""
+    pos = QPoint(item.get("x", 0), item.get("y", 0))
+    comp_type = item.get("comp_type")
+
+    if comp_type == "widget_button":
+        return WidgetButton(canvas, pos)
+    if comp_type == "widget_label":
+        return WidgetLabel(canvas, pos)
+    if comp_type == "widget_i_text":
+        return WidgetIText(canvas, pos)
+    if comp_type == "widget_o_text":
+        return WidgetOText(canvas, pos)
+    if comp_type == "widget_select":
+        return WidgetSelect(canvas, pos)
+    if comp_type == "widget_i_file_link":
+        return WidgetIFileLink(canvas, pos)
+    if comp_type == "widget_o_file_link":
+        return WidgetOFileLink(canvas, pos)
+    if comp_type == "widget_i_folder_link":
+        return WidgetIFolderLink(canvas, pos)
+    if comp_type == "widget_o_folder_link":
+        return WidgetOFolderLink(canvas, pos)
+    if comp_type == "widget_console":
+        return WidgetConsole(canvas, pos)
+    if comp_type == "widget_interactive_console":
+        return WidgetInteractiveConsole(canvas, pos)
+    if comp_type == "widget_requirements_link":
+        return WidgetRequirementsLink(canvas, pos)
+
+    return None
+
+
+def load_window_data(data, canvas, edit_mode=False):
+    """Load widgets from already parsed window data."""
+    for item in data:
+        obj = create_widget_from_item(item, canvas)
+
+        if obj:
+            obj.from_dict(item)
+            obj.is_template = False
+            obj.set_edit_mode(edit_mode)
+            obj.show()
+
+
 def load_window(win_id, canvas):
     path = os.path.join(BASE_PROJECT_DIR, win_id, "config.json")
-    if not os.path.exists(path): return
-    
-    with open(path, "r") as f:
+    if not os.path.exists(path):
+        return
+
+    with open(path, "r", encoding="utf-8") as f:
         try:
             data = json.load(f)
         except json.JSONDecodeError:
-            data = [] 
-            
-        for item in data:
-            pos = QPoint(item.get('x', 0), item.get('y', 0))
-            comp_type = item.get('comp_type')
-            
-            obj = None
-            if comp_type == "widget_button": obj = WidgetButton(canvas, pos)
-            elif comp_type == "widget_label": obj = WidgetLabel(canvas, pos)
-            elif comp_type == "widget_i_text": obj = WidgetIText(canvas, pos)
-            elif comp_type == "widget_o_text": obj = WidgetOText(canvas, pos)
-            elif comp_type == "widget_select": obj = WidgetSelect(canvas, pos)
-            elif comp_type == "widget_i_file_link": obj = WidgetIFileLink(canvas, pos)
-            elif comp_type == "widget_o_file_link": obj = WidgetOFileLink(canvas, pos)
-            elif comp_type == "widget_i_folder_link": obj = WidgetIFolderLink(canvas, pos)
-            elif comp_type == "widget_o_folder_link": obj = WidgetOFolderLink(canvas, pos)
-            elif comp_type == "widget_console": obj = WidgetConsole(canvas, pos)
-            elif comp_type == "widget_interactive_console": obj = WidgetInteractiveConsole(canvas, pos)
-            elif comp_type == "widget_requirements_link": obj = WidgetRequirementsLink(canvas, pos)
+            data = []
 
-            if obj:
-                obj.from_dict(item)
-                obj.is_template = False
-                obj.set_edit_mode(False)
-                obj.show()
+    clear_canvas(canvas)
+    load_window_data(data, canvas, edit_mode=False)
 
 def export_window(win_id, output_zip_path):
     """ Compresses an entire window bundle securely into a .zip file. """

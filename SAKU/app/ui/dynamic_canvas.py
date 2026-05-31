@@ -523,6 +523,33 @@ class CustomWindow(QWidget):
                 except Exception:
                     pass
 
+    def _restore_project_from_snapshot(self, snapshot, edit_mode=False):
+        """Restore the visible canvas to a previous snapshot."""
+        try:
+            data = json.loads(snapshot or "[]")
+        except Exception:
+            data = []
+
+        self.canvas.set_loading_state(True)
+
+        try:
+            package_manager.clear_canvas(self.canvas)
+            QApplication.processEvents()
+
+            package_manager.load_window_data(
+                data,
+                self.canvas,
+                edit_mode=edit_mode
+            )
+
+            self._reconnect_loaded_widgets()
+            self.canvas.set_edit_mode(edit_mode)
+            self.canvas._refresh_relative_geometry_for_all_widgets()
+
+        finally:
+            self.canvas.set_loading_state(False)
+            QTimer.singleShot(0, self.canvas._refresh_relative_geometry_for_all_widgets)
+
     def _ask_before_leaving_edit_mode(self):
         """Ask whether to save changes when the user turns Design Mode off."""
         msg = QMessageBox(self)
@@ -602,7 +629,11 @@ class CustomWindow(QWidget):
                     return
 
                 if choice == "discard":
-                    self._project_dirty = True
+                    self._restore_project_from_snapshot(
+                        baseline_snapshot,
+                        edit_mode=False
+                    )
+                    self._project_dirty = False
 
                 if choice == "save":
                     try:
