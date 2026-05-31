@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import tempfile
 from PySide6.QtCore import QPoint
 from app.widgets import (
     BaseComponent, WidgetButton, WidgetIText, WidgetOText,
@@ -153,3 +154,90 @@ def import_window(zip_path, new_win_id):
     
     os.makedirs(win_folder, exist_ok=True)
     shutil.unpack_archive(zip_path, win_folder, 'zip')
+
+
+def _make_unique_window_id(preferred_win_id):
+    """Return a safe window id that does not already exist on disk."""
+    base_name = (preferred_win_id or "Imported_Window").strip().replace(" ", "_")
+    if not base_name:
+        base_name = "Imported_Window"
+
+    candidate = base_name
+    counter = 2
+
+    while os.path.exists(os.path.join(BASE_PROJECT_DIR, candidate)):
+        candidate = f"{base_name}_imported_{counter}"
+        counter += 1
+
+    return candidate
+
+
+def export_group(group_name, window_ids, output_zip_path):
+    """Export a complete group with all its window folders into one ZIP file."""
+    os.makedirs(BASE_PROJECT_DIR, exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        windows_dir = os.path.join(temp_dir, "windows")
+        os.makedirs(windows_dir, exist_ok=True)
+
+        clean_window_ids = []
+
+        for window_id in window_ids:
+            src_folder = os.path.join(BASE_PROJECT_DIR, window_id)
+            if not os.path.isdir(src_folder):
+                raise FileNotFoundError(f"Window '{window_id}' does not exist on disk.")
+
+            dst_folder = os.path.join(windows_dir, window_id)
+            shutil.copytree(src_folder, dst_folder)
+            clean_window_ids.append(window_id)
+
+        manifest = {
+            "type": "saku_group_export",
+            "version": 1,
+            "group_name": group_name,
+            "windows": clean_window_ids
+        }
+
+        with open(os.path.join(temp_dir, "group_manifest.json"), "w", encoding="utf-8") as f:
+            json.dump(manifest, f, indent=4, ensure_ascii=False)
+
+        base_name = os.path.splitext(output_zip_path)[0]
+        shutil.make_archive(base_name, "zip", temp_dir)
+
+
+def import_group(zip_path, new_group_name):
+    """Import a group ZIP and copy all contained windows into the workspace."""
+    os.makedirs(BASE_PROJECT_DIR, exist_ok=True)
+
+    imported_windows = []
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        shutil.unpack_archive(zip_path, temp_dir, "zip")
+
+        manifest_path = os.path.join(temp_dir, "group_manifest.json")
+        if not os.path.isfile(manifest_path):
+            raise ValueError("This ZIP is not a SAKU group export.")
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        if manifest.get("type") != "saku_group_export":
+            raise ValueError("This ZIP is not a valid SAKU group export.")
+
+        windows_dir = os.path.join(temp_dir, "windows")
+        exported_windows = manifest.get("windows", [])
+
+        for old_window_id in exported_windows:
+            src_folder = os.path.join(windows_dir, old_window_id)
+            if not os.path.isdir(src_folder):
+                raise FileNotFoundError(f"Missing window '{old_window_id}' in the group ZIP.")
+
+            new_window_id = _make_unique_window_id(old_window_id)
+            dst_folder = os.path.join(BASE_PROJECT_DIR, new_window_id)
+            shutil.copytree(src_folder, dst_folder)
+            imported_windows.append(new_window_id)
+
+    return {
+        "group_name": new_group_name,
+        "windows": imported_windows
+    }

@@ -42,12 +42,14 @@ class Dashboard(QMainWindow):
         file_menu.addAction(t("new_group"), self.create_new_group)
         file_menu.addSeparator()
         file_menu.addAction(t("import_zip"), self.import_win)
+        file_menu.addAction(t("import_group_zip", "Import Group .ZIP"), self.import_group)
         file_menu.addSeparator()
         file_menu.addAction(t("exit"), self.close)
         
         # EDIT MENU
         edit_menu = menubar.addMenu(t("edit"))
         edit_menu.addAction(t("rename_group"), self.edit_selected_group)
+        edit_menu.addAction(t("export_selected_group", "Export Selected Group"), self.export_selected_group)
         edit_menu.addAction(t("delete_group"), self.delete_selected_group)
         edit_menu.addSeparator()
         edit_menu.addAction(t("delete_window"), self.delete_selected_window)
@@ -155,12 +157,14 @@ class Dashboard(QMainWindow):
         file_menu.addAction(t("new_group"), self.create_new_group)
         file_menu.addSeparator()
         file_menu.addAction(t("import_zip"), self.import_win)
+        file_menu.addAction(t("import_group_zip", "Import Group .ZIP"), self.import_group)
         file_menu.addSeparator()
         file_menu.addAction(t("exit"), self.close)
         
         # EDIT MENU
         edit_menu = menubar.addMenu(t("edit"))
         edit_menu.addAction(t("rename_group"), self.edit_selected_group)
+        edit_menu.addAction(t("export_selected_group", "Export Selected Group"), self.export_selected_group)
         edit_menu.addAction(t("delete_group"), self.delete_selected_group)
         edit_menu.addSeparator()
         edit_menu.addAction(t("delete_window"), self.delete_selected_window)
@@ -331,6 +335,71 @@ class Dashboard(QMainWindow):
             QMessageBox.warning(self, t("selection_required"), f"{t('please_select_window')} export!")
             return
         self.export_window(window_id)
+
+    def export_selected_group(self):
+        """Export the selected group to ZIP."""
+        group_name = self.get_selected_group()
+        if not group_name:
+            QMessageBox.warning(self, t("selection_required"), t("please_select_group"))
+            return
+        self.export_group(group_name)
+
+    def _make_unique_group_name(self, preferred_group_name):
+        """Return a group name that does not already exist."""
+        base_name = (preferred_group_name or "Imported_Group").strip()
+        if not base_name:
+            base_name = "Imported_Group"
+
+        groups_data = group_manager.load_groups()
+        existing_names = {g.get("name") for g in groups_data.get("groups", [])}
+
+        candidate = base_name
+        counter = 2
+
+        while candidate in existing_names:
+            candidate = f"{base_name}_{counter}"
+            counter += 1
+
+        return candidate
+
+    def import_group(self):
+        """Import a complete group ZIP into the workspace."""
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            t("import_group_zip", "Import Group .ZIP"),
+            "",
+            "Zip Files (*.zip)"
+        )
+        if not path:
+            return
+
+        group_name, ok = QInputDialog.getText(
+            self,
+            t("import_group", "Import Group"),
+            t("choose_group_name", "Choose a name for the group:")
+        )
+        if not ok:
+            return
+
+        group_name = self._make_unique_group_name(group_name)
+
+        try:
+            result = package_manager.import_group(path, group_name)
+            group_manager.create_group(group_name)
+
+            for window_id in result.get("windows", []):
+                group_manager.add_window_to_group(window_id, group_name)
+
+            self.refresh()
+            QMessageBox.information(
+                self,
+                t("success"),
+                t("group_imported_success", "Group imported successfully!")
+            )
+        except Exception as e:
+            QMessageBox.critical(self, t("error"), f"{t('failed_to_import')}:\n{e}")
+
+
     
     def create_new_group(self):
         """Create a new group."""
@@ -358,6 +427,7 @@ class Dashboard(QMainWindow):
         if item_type == "group":
             # Options for groups
             edit_act = menu.addAction(t("rename_group"))
+            export_group_act = menu.addAction(t("export_group_zip", "Export Group .ZIP"))
             delete_act = menu.addAction(t("delete_group"))
             menu.addSeparator()
             add_win_to_group = menu.addAction(t("add_new_window"))
@@ -368,6 +438,8 @@ class Dashboard(QMainWindow):
                 self.rename_group(item_name)
             elif action == delete_act:
                 self.delete_group(item_name)
+            elif action == export_group_act:
+                self.export_group(item_name)
             elif action == add_win_to_group:
                 self.new_win_in_group(item_name)
         
@@ -551,6 +623,31 @@ class Dashboard(QMainWindow):
                 QMessageBox.information(self, t("success"), f"{t('project')} '{window_id}' {t('successfully_exported')}!")
             except Exception as e:
                 QMessageBox.critical(self, t("error"), f"{t('failed_to_export')}:\n{e}")
+    
+    def export_group(self, group_name):
+        """Export a group and all its windows to ZIP."""
+        window_ids = group_manager.get_group_windows(group_name)
+        safe_group_name = group_name.replace(" ", "_")
+
+        dest, _ = QFileDialog.getSaveFileName(
+            self,
+            t("export_group_zip", "Export Group .ZIP"),
+            safe_group_name + "_group_export.zip",
+            "Zip Files (*.zip)"
+        )
+        if not dest:
+            return
+
+        try:
+            package_manager.export_group(group_name, window_ids, dest)
+            QMessageBox.information(
+                self,
+                t("success"),
+                t("group_exported_success", "Group exported successfully!")
+            )
+        except Exception as e:
+            QMessageBox.critical(self, t("error"), f"{t('failed_to_export')}:\n{e}")
+
     
     def show_appearance_settings(self):
         """Show theme selection dialog."""

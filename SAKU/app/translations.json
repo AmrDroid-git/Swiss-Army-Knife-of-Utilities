@@ -179,7 +179,16 @@
       "delete_ungrouped_with_windows_confirm": "Deleting Ungrouped will also delete its windows because they cannot be moved to the same group.",
       "delete_group_with_windows_choice": "Choose what to do with the windows inside this group.",
       "delete_group_and_windows": "Delete group and windows",
-      "move_windows_to_ungrouped": "Move windows to Ungrouped"
+      "move_windows_to_ungrouped": "Move windows to Ungrouped",
+      "change_color": "Change Text Color",
+      "select_text_color": "Select Text Color",
+      "import_group_zip": "Import Group .ZIP",
+      "export_selected_group": "Export Selected Group",
+      "export_group_zip": "Export Group .ZIP",
+      "import_group": "Import Group",
+      "choose_group_name": "Choose a name for the group:",
+      "group_imported_success": "Group imported successfully!",
+      "group_exported_success": "Group exported successfully!"
     },
     "fr": {
       "file": "Fichier",
@@ -347,7 +356,16 @@
       "delete_ungrouped_with_windows_confirm": "La suppression de Ungrouped supprimera aussi ses fenêtres, car elles ne peuvent pas être déplacées vers le même groupe.",
       "delete_group_with_windows_choice": "Choisissez quoi faire avec les fenêtres dans ce groupe.",
       "delete_group_and_windows": "Supprimer le groupe et les fenêtres",
-      "move_windows_to_ungrouped": "Déplacer les fenêtres vers Ungrouped"
+      "move_windows_to_ungrouped": "Déplacer les fenêtres vers Ungrouped",
+      "change_color": "Changer la couleur du texte",
+      "select_text_color": "Sélectionner la couleur du texte",
+      "import_group_zip": "Importer un groupe .ZIP",
+      "export_selected_group": "Exporter le groupe sélectionné",
+      "export_group_zip": "Exporter le groupe .ZIP",
+      "import_group": "Importer un groupe",
+      "choose_group_name": "Choisissez un nom pour le groupe :",
+      "group_imported_success": "Groupe importé avec succès !",
+      "group_exported_success": "Groupe exporté avec succès !"
     },
     "ar": {
       "file": "ملف",
@@ -515,7 +533,16 @@
       "delete_ungrouped_with_windows_confirm": "حذف Ungrouped سيحذف النوافذ الموجودة داخله أيضاً لأنها لا يمكن نقلها إلى نفس المجموعة.",
       "delete_group_with_windows_choice": "اختر ماذا تريد أن تفعل بالنوافذ داخل هذه المجموعة.",
       "delete_group_and_windows": "حذف المجموعة والنوافذ",
-      "move_windows_to_ungrouped": "نقل النوافذ إلى Ungrouped"
+      "move_windows_to_ungrouped": "نقل النوافذ إلى Ungrouped",
+      "change_color": "تغيير لون النص",
+      "select_text_color": "اختيار لون النص",
+      "import_group_zip": "استيراد مجموعة .ZIP",
+      "export_selected_group": "تصدير المجموعة المحددة",
+      "export_group_zip": "تصدير المجموعة .ZIP",
+      "import_group": "استيراد مجموعة",
+      "choose_group_name": "اختر اسماً للمجموعة:",
+      "group_imported_success": "تم استيراد المجموعة بنجاح!",
+      "group_exported_success": "تم تصدير المجموعة بنجاح!"
     }
   }
 }
