@@ -1,0 +1,41 @@
+OpenRouter + groq API keys talk to LLM (text + uploaded files in a folder)
+
+download from internet:
+#yt-dlp
+#download photos
+
+photoshop:
+blur photo
+#split photo on n parts horizontally and m parts vertically
+#Image Resizer: Resize images by width/height or percentage. Very presentable.
+#Image Format Converter: Convert PNG/JPG/WEBP/BMP.
+
+Convertions:
+#Audio Converter to MP3
+#mp4 to mp3
+#Audio Trimmer: Cut audio from start/end time.
+#merges many PDF's
+#photos to pdf
+#md to pdf
+#PDF to Images
+
+Dev Tools:
+#Hashing
+#Encoding
+#URL Encode/Decode
+#run localServer in port xxxx
+#File Encryption/Decryption
+
+
+Files:
+#removeMetaData
+# File Organizer :Automatically move files by type: images, PDFs, videos, code, archives.
+# Empty Folder Remover: Scan and remove useless empty folders.
+# Large File Finder: Find files bigger than X MB/GB.
+# Duplicate Files Finder recursiverly in a folder: Find repeated files using hash and delete/copy them
+
+
+
+Others:
+#QR Code Generator
+#Website Screenshot
