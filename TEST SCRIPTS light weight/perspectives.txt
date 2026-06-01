@@ -1,0 +1,11 @@
+add audio player widget inside the app
+add photo presentation inside the app
+run many scripts sequencelly in one window like n8n
+search for utilities to download from inside the app itself(not web)
+
+for the web: upload zip inside the website directly(but it need too much money for the server)
+
+
+interactive input field that runs script for each new keyboard click
+
+supports more languages
