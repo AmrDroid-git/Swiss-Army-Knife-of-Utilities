@@ -134,7 +134,7 @@ class ScriptEngine(QObject):
         elif self.current_script_type == "c":
             # Find compiled Main executable (or Main.exe on Windows)
             exe_name = "Main.exe" if platform.system() == "Windows" else "Main"
-            exe_path = os.path.join(self.current_script_dir, exe_name)
+            exe_path = os.path.abspath(os.path.join(self.current_script_dir, exe_name))
             if not os.path.exists(exe_path):
                 self.error_emitted.emit(f"ERROR: {exe_name} executable not found. Please compile the C script first using the 'Compile' option.")
                 self.process = None
@@ -152,7 +152,7 @@ class ScriptEngine(QObject):
         elif self.current_script_type == "cpp":
             # Find compiled Main executable (or Main.exe on Windows)
             exe_name = "Main.exe" if platform.system() == "Windows" else "Main"
-            exe_path = os.path.join(self.current_script_dir, exe_name)
+            exe_path = os.path.abspath(os.path.join(self.current_script_dir, exe_name))
             if not os.path.exists(exe_path):
                 self.error_emitted.emit(f"ERROR: {exe_name} executable not found. Please compile the C++ script first using the 'Compile' option.")
                 self.process = None
